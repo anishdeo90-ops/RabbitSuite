@@ -21,18 +21,18 @@
 		window.open("/hrms", "_blank");
 	}
 
-	function makeItem() {
+	function makeMenuItem() {
 		const item = document.createElement("div");
-		item.id = "hirerabbits-desk-install";
-		item.className = "standard-sidebar-item";
+		item.id = "hirerabbits-desk-menu-install";
+		item.className = "dropdown-menu-item";
 		item.innerHTML = `
-			<a class="item-anchor" href="#" title="Install app">
-				<span class="sidebar-item-icon">
-					<svg class="icon icon-md" aria-hidden="true">
+			<a href="#">
+				<span class="frappe-menu-item-icon">
+					<svg class="icon icon-sm" aria-hidden="true">
 						<use href="#icon-download"></use>
 					</svg>
 				</span>
-				<span class="sidebar-item-label">Install app</span>
+				<span class="menu-item-title">Install app</span>
 			</a>
 		`;
 		item.addEventListener("click", (event) => {
@@ -42,24 +42,22 @@
 		return item;
 	}
 
-	function ensureInstallItem() {
-		const existing = document.getElementById("hirerabbits-desk-install");
-		if (!isHRMSDesk()) {
-			existing?.remove();
-			return;
-		}
-		if (existing) return;
-
-		const sidebar = document.querySelector(".standard-sidebar");
-		if (!sidebar) return;
-
-		const settingsItem = Array.from(sidebar.querySelectorAll(".standard-sidebar-item")).find(
-			(item) => item.textContent.trim() === "Settings"
+	function ensureHeaderMenuItem() {
+		if (!isHRMSDesk()) return;
+		const menu = Array.from(document.querySelectorAll(".frappe-menu, .dropdown-menu")).find(
+			(menu) => menu.textContent.includes("Desktop") && menu.textContent.includes("Logout")
 		);
-		(settingsItem || sidebar).insertAdjacentElement(settingsItem ? "afterend" : "beforeend", makeItem());
+		if (!menu || menu.querySelector("#hirerabbits-desk-menu-install")) return;
+
+		const logoutItem = Array.from(menu.children).find((item) => item.textContent.trim() === "Logout");
+		(logoutItem || menu).insertAdjacentElement(logoutItem ? "beforebegin" : "beforeend", makeMenuItem());
 	}
 
-	setInterval(ensureInstallItem, 500);
-	window.addEventListener("hashchange", ensureInstallItem);
-	window.addEventListener("popstate", ensureInstallItem);
+	function ensureInstallActions() {
+		ensureHeaderMenuItem();
+	}
+
+	setInterval(ensureInstallActions, 500);
+	window.addEventListener("hashchange", ensureInstallActions);
+	window.addEventListener("popstate", ensureInstallActions);
 })();
