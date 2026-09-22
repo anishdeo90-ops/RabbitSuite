@@ -72,8 +72,16 @@ const apps = createResource({
   url: 'frappe.apps.get_apps',
   cache: 'apps',
   auto: true,
-  transform: (data) => [deskApp(), ...crmSiblingApps(data)],
+  transform: crmSiblingApps,
 })
+
+const appOverrides = {
+  erpnext: { title: 'ERP', route: '/desk' },
+  hrms: { title: 'HRMS', route: '/desk/people' },
+  helpdesk: { title: 'Support', route: '/helpdesk' },
+}
+
+const hiddenApps = new Set(['frappe', 'crm', 'india_payroll', 'telephony'])
 
 const dropdownItems = computed(() => {
   if (!settings.value?.dropdown_items) return []
@@ -173,23 +181,14 @@ function appMenuItems() {
   }))
 }
 
-function deskApp() {
-  return {
-    name: 'frappe',
-    logo: '/assets/frappe/images/framework.png',
-    title: __('Desk'),
-    route: '/desk',
-  }
-}
-
 function crmSiblingApps(data) {
   return data
-    .filter((app) => app.name !== 'crm')
+    .filter((app) => !hiddenApps.has(app.name) && app.route)
     .map((app) => ({
       name: app.name,
       logo: app.logo,
-      title: __(app.title),
-      route: app.route,
+      title: __(appOverrides[app.name]?.title || app.title),
+      route: appOverrides[app.name]?.route || app.route,
     }))
 }
 </script>
