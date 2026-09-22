@@ -1,0 +1,4 @@
+frappe-bench/
+tmp/
+*.log
+*.tmp

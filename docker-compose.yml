@@ -1,0 +1,65 @@
+services:
+  suite-mariadb:
+    image: mariadb:11.8
+    container_name: suite-mariadb
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-uroot", "-padmin"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - suite_mariadb_data:/var/lib/mysql
+
+  suite-redis:
+    image: redis:8-alpine
+    container_name: suite-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - suite_redis_data:/data
+
+  suite-frappe:
+    image: frappe/bench:latest
+    container_name: suite-frappe
+    depends_on:
+      suite-mariadb:
+        condition: service_healthy
+      suite-redis:
+        condition: service_healthy
+    working_dir: /home/frappe
+    command: >
+      bash -lc 'if [ -d /home/frappe/frappe-bench ]; then
+        cd /home/frappe/frappe-bench && bench start;
+      else
+        sleep infinity;
+      fi'
+    environment:
+      SITE: ${SITE:-suite.localhost}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+      FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
+      ERPNEXT_BRANCH: ${ERPNEXT_BRANCH:-version-16}
+      HRMS_BRANCH: ${HRMS_BRANCH:-version-16}
+      INDIA_PAYROLL_BRANCH: ${INDIA_PAYROLL_BRANCH:-version-16}
+      TELEPHONY_BRANCH: ${TELEPHONY_BRANCH:-develop}
+      HELPDESK_BRANCH: ${HELPDESK_BRANCH:-main}
+      CRM_BRANCH: ${CRM_BRANCH:-main}
+    ports:
+      - "8010:8000"
+      - "9010:9000"
+    volumes:
+      - suite_bench:/home/frappe
+
+volumes:
+  suite_mariadb_data:
+  suite_redis_data:
+  suite_bench:
