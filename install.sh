@@ -68,6 +68,7 @@ copy_patch helpdesk/desk/vite.config.js
 copy_patch hrms/frontend/src/components/InstallPrompt.vue
 copy_patch hrms/frontend/src/views/Profile.vue
 copy_patch hrms/hrms/hooks.py
+copy_patch hrms/hrms/public/js/hirerabbits_desk_install.js
 copy_patch hrms/frontend/vite.config.js
 
 if [ ! -d "sites/$SITE" ]; then
