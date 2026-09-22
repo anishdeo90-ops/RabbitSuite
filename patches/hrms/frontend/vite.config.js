@@ -24,8 +24,8 @@ export default defineConfig({
 			},
 			manifest: {
 				display: "browser",
-				name: "Frappe HR",
-				short_name: "Frappe HR",
+				name: "Hire Rabbits HRMS",
+				short_name: "HRMS",
 				start_url: "/hrms",
 				description: "Everyday HR & Payroll operations at your fingertips",
 				theme_color: "#ffffff",

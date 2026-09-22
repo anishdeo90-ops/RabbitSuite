@@ -77,7 +77,7 @@ const apps = createResource({
 
 const appOverrides = {
   erpnext: { title: 'ERP', route: '/desk' },
-  hrms: { title: 'HRMS', route: '/desk/people' },
+  hrms: { title: 'HRMS', route: '/desk/hr-setup' },
   helpdesk: { title: 'Support', route: '/helpdesk' },
 }
 

@@ -49,6 +49,23 @@ get_app telephony "$TELEPHONY_BRANCH" https://github.com/frappe/telephony
 get_app helpdesk "$HELPDESK_BRANCH" https://github.com/frappe/helpdesk
 get_app crm "$CRM_BRANCH" https://github.com/frappe/crm
 
+copy_patch() {
+  src="/tmp/suite-patches/$1"
+  dest="$BENCH/apps/$1"
+
+  if [ -f "$src" ]; then
+    mkdir -p "$(dirname "$dest")"
+    cp "$src" "$dest"
+  fi
+}
+
+copy_patch crm/frontend/src/components/UserDropdown.vue
+copy_patch crm/frontend/vite.config.js
+copy_patch helpdesk/desk/src/composables/useApps.ts
+copy_patch helpdesk/desk/vite.config.js
+copy_patch hrms/hrms/hooks.py
+copy_patch hrms/frontend/vite.config.js
+
 if [ ! -d "sites/$SITE" ]; then
   bench new-site "$SITE" \
     --db-host suite-mariadb \
