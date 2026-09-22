@@ -62,7 +62,11 @@ copy_patch() {
 copy_patch crm/frontend/src/components/UserDropdown.vue
 copy_patch crm/frontend/vite.config.js
 copy_patch helpdesk/desk/src/composables/useApps.ts
+copy_patch helpdesk/desk/src/components/layouts/Sidebar.vue
+copy_patch helpdesk/desk/src/components/layouts/MobileSidebar.vue
 copy_patch helpdesk/desk/vite.config.js
+copy_patch hrms/frontend/src/components/InstallPrompt.vue
+copy_patch hrms/frontend/src/views/Profile.vue
 copy_patch hrms/hrms/hooks.py
 copy_patch hrms/frontend/vite.config.js
 
