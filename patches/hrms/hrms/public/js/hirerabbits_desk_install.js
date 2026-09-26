@@ -1,6 +1,21 @@
 (function () {
 	let deferredInstallPrompt = null;
 
+	function ensureNavbarLogoSize() {
+		if (document.querySelector("#hirerabbits-navbar-logo-size")) return;
+		const style = document.createElement("style");
+		style.id = "hirerabbits-navbar-logo-size";
+		style.textContent = `
+			.navbar-home img[src*="hirerabbits-logo-tight"] {
+				width: auto !important;
+				height: 34px !important;
+				max-width: 150px !important;
+				object-fit: contain;
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
 	window.addEventListener("beforeinstallprompt", (event) => {
 		event.preventDefault();
 		deferredInstallPrompt = event;
@@ -54,6 +69,7 @@
 	}
 
 	function ensureInstallActions() {
+		ensureNavbarLogoSize();
 		ensureHeaderMenuItem();
 	}
 
