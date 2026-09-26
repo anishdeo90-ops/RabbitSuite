@@ -23,10 +23,11 @@ export default defineConfig({
 				enabled: true,
 			},
 			manifest: {
-				display: "browser",
+				display: "standalone",
 				name: "Hire Rabbits HRMS",
 				short_name: "HRMS",
 				start_url: "/hrms",
+				scope: "/hrms",
 				description: "Everyday HR & Payroll operations at your fingertips",
 				theme_color: "#ffffff",
 				icons: [

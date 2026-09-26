@@ -128,12 +128,6 @@ const themeMenuItem = computed(() => ({
 }));
 
 const isFCSite = ref(window.is_fc_site);
-let deferredInstallPrompt: any = null;
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  deferredInstallPrompt = event;
-});
 
 const customerPortalDropdown = computed(() => [
   {
@@ -203,15 +197,7 @@ const agentPortalDropdown = computed(() => [
   },
 ]);
 
-async function installApp() {
-  if (!deferredInstallPrompt) {
-    alert(__("Use your browser menu to install Hire Rabbits."));
-    return;
-  }
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-}
+const installApp = () => window.dispatchEvent(new Event("hirerabbits:install"));
 
 const profileSettings = computed(() => {
   return isCustomerPortal.value

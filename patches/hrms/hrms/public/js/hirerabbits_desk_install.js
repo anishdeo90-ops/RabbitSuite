@@ -18,7 +18,7 @@
 			deferredInstallPrompt = null;
 			return;
 		}
-		window.open("/hrms", "_blank");
+		window.open("/hrms/login?install=1", "_blank");
 	}
 
 	function makeMenuItem() {
@@ -44,7 +44,7 @@
 
 	function ensureHeaderMenuItem() {
 		if (!isHRMSDesk()) return;
-		const menu = Array.from(document.querySelectorAll(".frappe-menu, .dropdown-menu")).find(
+		const menu = Array.from(document.querySelectorAll(".sidebar-header-menu, .frappe-menu, .dropdown-menu")).find(
 			(menu) => menu.textContent.includes("Desktop") && menu.textContent.includes("Logout")
 		);
 		if (!menu || menu.querySelector("#hirerabbits-desk-menu-install")) return;

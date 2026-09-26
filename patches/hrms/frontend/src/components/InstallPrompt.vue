@@ -61,6 +61,7 @@ import { Dialog, Popover, FeatherIcon } from "frappe-ui"
 const deferredPrompt = ref(null)
 const showDialog = ref(false)
 const iosInstallMessage = ref(false)
+const installRequested = ref(new URLSearchParams(window.location.search).has("install"))
 
 const isIos = () => {
 	// Detects if device is on iOS
@@ -74,7 +75,7 @@ const isInStandaloneMode = () =>
 
 // Checks if should display install popup notification:
 if (isIos() && !isInStandaloneMode()) {
-	iosInstallMessage.value = true
+	iosInstallMessage.value = false
 }
 
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -82,16 +83,39 @@ window.addEventListener("beforeinstallprompt", (e) => {
 	e.preventDefault()
 	// Stash the event so it can be triggered later.
 	deferredPrompt.value = e
-	if (isIos() && !isInStandaloneMode()) {
-		iosInstallMessage.value = true
-	} else {
-		showDialog.value = true
+	if (installRequested.value) {
+		showInstallDialog()
 	}
 	// Optionally, send analytics event that PWA install promo was shown.
 	console.log(`'beforeinstallprompt' event was fired.`)
 })
 
-window.addEventListener("hirerabbits:install", install)
+window.addEventListener("hirerabbits:install", () => {
+	installRequested.value = true
+	showInstallDialog()
+})
+
+setTimeout(() => {
+	if (installRequested.value && !deferredPrompt.value) {
+		showInstallDialog()
+	}
+}, 1000)
+
+function showInstallDialog() {
+	clearInstallQuery()
+	if (isIos() && !isInStandaloneMode()) {
+		iosInstallMessage.value = true
+	} else {
+		showDialog.value = true
+	}
+}
+
+function clearInstallQuery() {
+	const url = new URL(window.location.href)
+	if (!url.searchParams.has("install")) return
+	url.searchParams.delete("install")
+	window.history.replaceState({}, "", url.pathname + url.search + url.hash)
+}
 
 window.addEventListener("appinstalled", () => {
 	showDialog.value = false

@@ -20,10 +20,11 @@ export default defineConfig(async ({ mode }) => {
           enabled: true,
         },
         manifest: {
-          display: 'browser',
+          display: 'standalone',
           name: 'Hire Rabbits CRM',
           short_name: 'Hire Rabbits CRM',
           start_url: '/crm',
+          scope: '/crm',
           description:
             'Modern & 100% Open-source CRM tool to supercharge your sales operations',
           icons: [

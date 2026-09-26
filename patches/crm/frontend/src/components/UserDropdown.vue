@@ -82,12 +82,6 @@ const appOverrides = {
 }
 
 const hiddenApps = new Set(['frappe', 'crm', 'india_payroll', 'telephony'])
-let deferredInstallPrompt = null
-
-window.addEventListener('beforeinstallprompt', (event) => {
-  event.preventDefault()
-  deferredInstallPrompt = event
-})
 
 const dropdownItems = computed(() => {
   if (!settings.value?.dropdown_items) return []
@@ -193,15 +187,7 @@ function appMenuItems() {
   }))
 }
 
-async function installApp() {
-  if (!deferredInstallPrompt) {
-    alert(__('Use your browser menu to install Hire Rabbits.'))
-    return
-  }
-  deferredInstallPrompt.prompt()
-  await deferredInstallPrompt.userChoice
-  deferredInstallPrompt = null
-}
+const installApp = () => window.dispatchEvent(new Event('hirerabbits:install'))
 
 function crmSiblingApps(data) {
   return data

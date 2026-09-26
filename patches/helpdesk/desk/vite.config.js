@@ -56,10 +56,11 @@ export default defineConfig(async ({ mode }) => {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },
         manifest: {
-          display: "browser",
+          display: "standalone",
           name: "Hire Rabbits Helpdesk",
           short_name: "Helpdesk",
           start_url: "/helpdesk",
+          scope: "/helpdesk",
           description:
             "Modern, Streamlined, Free and Open Source Customer Service Software",
           icons: [

@@ -56,12 +56,6 @@ const { appsMenuOption } = useApps();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
-let deferredInstallPrompt: any = null;
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  deferredInstallPrompt = event;
-});
 
 const agentStatusStore = useAgentStatusStore();
 
@@ -140,15 +134,7 @@ const agentPortalDropdown = computed(() => [
   },
 ]);
 
-async function installApp() {
-  if (!deferredInstallPrompt) {
-    alert(__("Use your browser menu to install Hire Rabbits."));
-    return;
-  }
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-}
+const installApp = () => window.dispatchEvent(new Event("hirerabbits:install"));
 
 const profileSettings = computed(() => {
   return isCustomerPortal.value
