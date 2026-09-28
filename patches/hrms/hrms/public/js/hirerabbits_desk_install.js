@@ -1,5 +1,17 @@
 (function () {
 	let deferredInstallPrompt = null;
+	const hrmsWorkspaces = new Set([
+		"HRMS",
+		"HR Setup",
+		"Expenses",
+		"Leaves",
+		"Payroll",
+		"Shift & Attendance",
+		"Recruitment",
+		"Performance",
+		"Tax & Benefits",
+		"Employee Lifecycle",
+	]);
 
 	function ensureNavbarLogoSize() {
 		if (document.querySelector("#hirerabbits-navbar-logo-size")) return;
@@ -21,10 +33,15 @@
 		deferredInstallPrompt = event;
 	});
 
-	function isHRMSDesk() {
+	function isHRMSDesk(sidebarHeader) {
 		const route = window.frappe?.get_route?.() || [];
 		const workspace = route[0] === "Workspaces" ? route[route.length - 1] : "";
-		return location.pathname.includes("/desk/hr-setup") || ["HR Setup", "HRMS"].includes(workspace);
+		const headerTitle = sidebarHeader?.sidebar?.sidebar_title || document.querySelector(".header-title")?.textContent?.trim();
+		const headerSubtitle = document.querySelector(".header-subtitle")?.textContent?.trim();
+		return ["/desk/hrms", "/desk/hr-setup"].some((path) => location.pathname.includes(path))
+			|| hrmsWorkspaces.has(workspace)
+			|| hrmsWorkspaces.has(headerTitle)
+			|| headerSubtitle === "HRMS";
 	}
 
 	function installApp() {
@@ -36,44 +53,32 @@
 		window.open("/hrms/login?install=1", "_blank");
 	}
 
-	function makeMenuItem() {
-		const item = document.createElement("div");
-		item.id = "hirerabbits-desk-menu-install";
-		item.className = "dropdown-menu-item";
-		item.innerHTML = `
-			<a href="#">
-				<span class="frappe-menu-item-icon">
-					<svg class="icon icon-sm" aria-hidden="true">
-						<use href="#icon-download"></use>
-					</svg>
-				</span>
-				<span class="menu-item-title">Install app</span>
-			</a>
-		`;
-		item.addEventListener("click", (event) => {
-			event.preventDefault();
-			installApp();
+	function addInstallMenuItem(items) {
+		if (!items || items.some((item) => item.name === "hirerabbits-install-app" || item.label === "Install app")) return;
+		const index = items.findIndex((item) => item.name === "website" || item.is_divider);
+		items.splice(index < 0 ? items.length : index, 0, {
+			name: "hirerabbits-install-app",
+			label: "Install app",
+			icon: "download",
+			onClick: installApp,
 		});
-		return item;
 	}
 
-	function ensureHeaderMenuItem() {
-		if (!isHRMSDesk()) return;
-		const menu = Array.from(document.querySelectorAll(".sidebar-header-menu, .frappe-menu, .dropdown-menu")).find(
-			(menu) => menu.textContent.includes("Desktop") && menu.textContent.includes("Logout")
-		);
-		if (!menu || menu.querySelector("#hirerabbits-desk-menu-install")) return;
-
-		const logoutItem = Array.from(menu.children).find((item) => item.textContent.trim() === "Logout");
-		(logoutItem || menu).insertAdjacentElement(logoutItem ? "beforebegin" : "beforeend", makeMenuItem());
-	}
-
-	function ensureInstallActions() {
+	function installSidebarMenuPatch() {
 		ensureNavbarLogoSize();
-		ensureHeaderMenuItem();
+		const SidebarHeader = window.frappe?.ui?.SidebarHeader;
+		if (!SidebarHeader || SidebarHeader.prototype.hirerabbitsInstallPatch) return Boolean(SidebarHeader);
+		SidebarHeader.prototype.hirerabbitsInstallPatch = true;
+		const originalSetupAppSwitcher = SidebarHeader.prototype.setup_app_switcher;
+		SidebarHeader.prototype.setup_app_switcher = function () {
+			if (isHRMSDesk(this)) addInstallMenuItem(this.dropdown_items);
+			return originalSetupAppSwitcher.apply(this, arguments);
+		};
+		return true;
 	}
 
-	setInterval(ensureInstallActions, 500);
-	window.addEventListener("hashchange", ensureInstallActions);
-	window.addEventListener("popstate", ensureInstallActions);
+	const timer = setInterval(() => {
+		if (installSidebarMenuPatch()) clearInterval(timer);
+	}, 250);
+	installSidebarMenuPatch();
 })();

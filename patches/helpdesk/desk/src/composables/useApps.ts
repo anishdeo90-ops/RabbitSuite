@@ -11,8 +11,8 @@ export interface App {
 }
 
 const appOverrides: Record<string, Partial<App>> = {
-  erpnext: { title: "ERP", route: "/desk" },
-  hrms: { title: "HRMS", route: "/desk/hr-setup" },
+  erpnext: { title: "ERP", route: "/desk/erp" },
+  hrms: { title: "HRMS", route: "/desk/hrms" },
   crm: { title: "CRM", route: "/crm" },
   helpdesk: { title: "Support", route: "/helpdesk" },
 };

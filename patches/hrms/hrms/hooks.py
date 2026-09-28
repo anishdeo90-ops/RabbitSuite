@@ -7,14 +7,14 @@ app_license = "GNU General Public License (v3)"
 required_apps = ["frappe/erpnext"]
 source_link = "http://github.com/frappe/hrms"
 app_logo_url = "/assets/hrms/images/frappe-hr-logo.svg"
-app_home = "/desk/hr-setup"
+app_home = "/desk/hrms"
 
 add_to_apps_screen = [
 	{
 		"name": "hrms",
 		"logo": "/assets/hrms/images/frappe-hr-logo.svg",
 		"title": "HRMS",
-		"route": "/desk/hr-setup",
+		"route": "/desk/hrms",
 		"has_permission": "hrms.hr.utils.check_app_permission",
 	}
 ]
@@ -26,8 +26,8 @@ add_to_apps_screen = [
 # app_include_css = "/assets/hrms/css/hrms.css"
 app_include_js = [
 	"hrms.bundle.js",
-	"/assets/hrms/js/hirerabbits_desk_install.js",
-	"/assets/hrms/js/hirerabbits_desk_home.js?v=2",
+	"/assets/hrms/js/hirerabbits_desk_install.js?v=3",
+	"/assets/hrms/js/hirerabbits_desk_home.js?v=5",
 ]
 app_include_css = ["hrms.bundle.css", "/assets/hrms/css/hirerabbits_desk_home.css?v=1"]
 

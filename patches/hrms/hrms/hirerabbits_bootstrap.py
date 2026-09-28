@@ -15,7 +15,7 @@ APP_ICONS = {
 		"label": "HRMS",
 		"icon_type": "App",
 		"link_type": "External",
-		"link": "/desk/people",
+		"link": "/desk/hrms",
 		"app": "hrms",
 		"logo_url": "/assets/hrms/images/frappe-hr-logo.svg",
 		"idx": 20,
@@ -42,7 +42,7 @@ APP_ICONS = {
 		"label": "ERP",
 		"icon_type": "App",
 		"link_type": "External",
-		"link": "/app/home",
+		"link": "/desk/erp",
 		"app": "erpnext",
 		"logo_url": "/assets/erpnext/images/erpnext-logo.svg",
 		"idx": 50,
@@ -108,6 +108,66 @@ WORKSPACES = {
 	"ERPNext Settings": "Hire Rabbits Settings",
 	"Frappe CRM": "Hire Rabbits CRM",
 }
+
+HRMS_DOCTYPE_OVERRIDES = {
+	"Branch",
+	"Department",
+	"Designation",
+	"Employee",
+	"Employment Type",
+	"Holiday List",
+}
+
+AREA_BY_APP = {
+	"erpnext": "erp",
+	"frappe": "admin",
+	"hrms": "hrms",
+	"india_payroll": "hrms",
+}
+
+
+def _slug(name):
+	return (name or "").lower().replace(" ", "-")
+
+
+@frappe.whitelist()
+def get_route_map():
+	modules = {
+		row.name: row.app_name
+		for row in frappe.get_all("Module Def", fields=["name", "app_name"], limit_page_length=0)
+	}
+	routes = {}
+
+	for row in frappe.get_all(
+		"DocType",
+		fields=["name", "module"],
+		filters={"istable": 0},
+		limit_page_length=0,
+	):
+		area = "hrms" if row.name in HRMS_DOCTYPE_OVERRIDES else AREA_BY_APP.get(modules.get(row.module))
+		if area:
+			routes[_slug(row.name)] = area
+
+	for row in frappe.get_all(
+		"Workspace",
+		fields=["name", "module", "app"],
+		limit_page_length=0,
+	):
+		area = AREA_BY_APP.get(row.app or modules.get(row.module))
+		if area:
+			routes[_slug(row.name)] = area
+
+	routes.update(
+		{
+			"erp": "erp",
+			"hrms": "hrms",
+			"admin": "admin",
+			"erpnext-settings": "erp",
+			"hr-setup": "hrms",
+			"shift-&-attendance": "hrms",
+		}
+	)
+	return routes
 
 
 def apply():

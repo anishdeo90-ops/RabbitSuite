@@ -2,6 +2,108 @@
 // Frappe rebuilds that page on every visit, so a MutationObserver re-applies the greeting + colours.
 // Styles live in hirerabbits_desk_home.css.
 (function () {
+	function installNamespaceRoutes() {
+		if (!window.frappe?.router || frappe.router.hirerabbitsNamespaces) return;
+		frappe.router.hirerabbitsNamespaces = true;
+
+		const roots = {
+			erp: "home",
+			hrms: "hr-setup",
+			admin: "users",
+		};
+		const aliases = {
+			"erp/settings": ["erpnext-settings"],
+			"hrms/shift-attendance": ["shift-&-attendance"],
+		};
+		const fallbackRoutes = {
+			"erpnext-settings": "erp",
+			"hr-setup": "hrms",
+			"shift-&-attendance": "hrms",
+		};
+		frappe.hirerabbitsRouteAreas = { ...(frappe.hirerabbitsRouteAreas || {}), ...fallbackRoutes };
+
+		const slug = (value) => String(value || "").toLowerCase().replace(/ /g, "-");
+		const currentArea = () => location.pathname.match(/^\/desk\/(erp|hrms|admin)(\/|$)/)?.[1];
+		const routeArea = (route) => frappe.hirerabbitsRouteAreas?.[slug(route)];
+		const workspaceArea = (route) => {
+			const page = (frappe.boot?.allowed_workspaces || []).find((page) => slug(page.name) === slug(route));
+			const app = page?.app || frappe.boot?.module_app?.[slug(page?.module)];
+			return { erpnext: "erp", frappe: "admin", hrms: "hrms", india_payroll: "hrms" }[app];
+		};
+		const areaForRoute = (route, fallback) => roots[route] || workspaceArea(route) || routeArea(route) || fallback;
+		const normalizeDeskPath = (path, fallback) => {
+			if (!path || !path.startsWith("/desk/")) return path;
+			const parts = path.slice(6).split("/");
+			if (roots[parts[0]] || parts[0] === "private") return path;
+			const area = areaForRoute(parts[0], fallback);
+			return area ? `/desk/${area}/${parts.join("/")}` : path;
+		};
+		const normalizeCurrentRoute = () => {
+			const path = normalizeDeskPath(location.pathname, currentArea());
+			if (path !== location.pathname) history.replaceState(null, "", path + location.search + location.hash);
+		};
+		const normalizeLinks = () => {
+			document.querySelectorAll('a[href^="/desk/"]').forEach((a) => {
+				const url = new URL(a.getAttribute("href"), location.origin);
+				const path = normalizeDeskPath(url.pathname, currentArea());
+				if (path !== url.pathname) a.setAttribute("href", path + url.search + url.hash);
+			});
+		};
+		frappe.hirerabbitsNormalizeLinks = normalizeLinks;
+
+		const originalConvert = frappe.router.convert_to_standard_route.bind(frappe.router);
+		frappe.router.convert_to_standard_route = function (route) {
+			const area = route[0];
+			if (roots[area]) {
+				const key = route.join("/");
+				route = aliases[key] || route.slice(1);
+				if (!route.length) route = [roots[area]];
+			}
+			return originalConvert(route);
+		};
+
+		const originalMakeUrl = frappe.router.make_url.bind(frappe.router);
+		frappe.router.make_url = (params) => normalizeDeskPath(originalMakeUrl(params), currentArea());
+
+		const originalPushState = frappe.router.push_state.bind(frappe.router);
+		frappe.router.push_state = (path, query = "") =>
+			originalPushState(normalizeDeskPath(path, currentArea()), query);
+
+		const originalGenerateRoute = frappe.utils.generate_route.bind(frappe.utils);
+		frappe.utils.generate_route = (item) => {
+			const area = item?.type?.toLowerCase() === "doctype"
+				? routeArea(slug(item.doctype || item.name))
+				: item?.type?.toLowerCase() === "workspace"
+					? workspaceArea(item.name)
+					: currentArea();
+			return normalizeDeskPath(originalGenerateRoute(item), area);
+		};
+
+		document.addEventListener("click", (event) => {
+			const a = event.target.closest?.('a[href^="/desk/"]');
+			if (!a) return;
+			const url = new URL(a.getAttribute("href"), location.origin);
+			const path = normalizeDeskPath(url.pathname, currentArea());
+			if (path === url.pathname) return;
+			event.preventDefault();
+			frappe.set_route(path + url.search + url.hash);
+		}, true);
+
+		frappe.call({
+			method: "hrms.hirerabbits_bootstrap.get_route_map",
+			callback: (r) => {
+				frappe.hirerabbitsRouteAreas = { ...frappe.hirerabbitsRouteAreas, ...(r.message || {}) };
+				normalizeCurrentRoute();
+				normalizeLinks();
+				frappe.router.route();
+			},
+		});
+
+		normalizeCurrentRoute();
+		normalizeLinks();
+		if (/^\/desk\/(erp|hrms|admin)(\/|$)/.test(location.pathname)) frappe.router.route();
+	}
+
 	const COLORS = {
 		support: "#7c3aed", helpdesk: "#7c3aed", hrms: "#10b981", crm: "#e11de0",
 		admin: "#6b7280", erp: "#0a84ff", erpnext: "#0a84ff",
@@ -13,6 +115,7 @@
 	}
 
 	function decorate() {
+		frappe.hirerabbitsNormalizeLinks?.();
 		const wrapper = document.querySelector(".desktop-wrapper");
 		if (!wrapper) return;
 		const container = wrapper.querySelector(".desktop-container");
@@ -39,6 +142,7 @@
 		queued = true;
 		requestAnimationFrame(() => { queued = false; decorate(); });
 	}).observe(document.body, { childList: true, subtree: true });
+	installNamespaceRoutes();
 	decorate();
 
 	if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {

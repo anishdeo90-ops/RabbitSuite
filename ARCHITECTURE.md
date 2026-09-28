@@ -29,14 +29,15 @@ Primary entry points:
 
 | Area | URL | Type | Main user |
 | --- | --- | --- | --- |
-| Main Desk / ERP | `/desk` | Frappe Desk | Admin, managers, operations |
-| HRMS admin | `/desk/hr-setup` | Frappe Desk workspace | HR, managers |
+| Main Desk shell | `/desk` | Frappe Desk | All logged-in users |
+| ERP admin | `/desk/erp` | Frappe Desk namespace | Admin, managers, operations |
+| HRMS admin | `/desk/hrms` | Frappe Desk namespace | HR, managers |
 | HRMS employee app | `/hrms` | Vue/Ionic PWA | Employees |
 | CRM | `/crm` | Vue SPA/PWA | Sales users, sales managers |
 | Support | `/helpdesk` | Vue SPA/PWA | Support agents, support managers |
 | Support customer portal | `/helpdesk/my-tickets` | Vue SPA/PWA | Customers |
 
-ERPNext does not have a separate `/erp` app. ERPNext lives inside Frappe Desk as workspaces such as Organization, Accounting, Selling, Buying, Stock, Assets, Projects, Quality, Manufacturing, and ERPNext Settings.
+ERPNext does not have a separate standalone `/erp` app. It lives inside Frappe Desk, but Hire Rabbits treats `/desk` as the neutral shell and namespaces ERP pages under `/desk/erp/...`.
 
 ## Code Lineage
 
@@ -297,9 +298,9 @@ The intended high-level user experience is:
 ```text
 Login
   -> Desk launcher
-      -> ERP       -> /desk
-      -> Admin     -> /app or Desk admin workspace/pages
-      -> HRMS      -> /desk/hr-setup
+      -> ERP       -> /desk/erp
+      -> Admin     -> /desk/admin
+      -> HRMS      -> /desk/hrms
       -> CRM       -> /crm
       -> Support   -> /helpdesk
 ```
@@ -307,8 +308,8 @@ Login
 Inside CRM and Support, the app dropdown shows sibling apps:
 
 ```text
-ERP      -> /desk
-HRMS     -> /desk/hr-setup
+ERP      -> /desk/erp
+HRMS     -> /desk/hrms
 CRM      -> /crm
 Support  -> /helpdesk
 ```
@@ -493,33 +494,33 @@ patches/hrms/frontend/vite.config.js
 
 ### HRMS Manager/Admin Routes
 
-Base path: `/desk`
+Base path: `/desk/hrms`
 
 Important HRMS workspaces:
 
 | Route | Purpose |
 | --- | --- |
-| `/desk/hr-setup` | Main HR setup/home |
-| `/desk/employee` | Employee list |
-| `/desk/leave-application` | Leave applications |
-| `/desk/attendance` | Attendance |
-| `/desk/employee-checkin` | Checkins |
-| `/desk/expense-claim` | Expense claims |
-| `/desk/payroll-entry` | Payroll runs |
-| `/desk/salary-slip` | Salary slips |
+| `/desk/hrms` | Main HR setup/home |
+| `/desk/hrms/employee` | Employee list |
+| `/desk/hrms/leave-application` | Leave applications |
+| `/desk/hrms/attendance` | Attendance |
+| `/desk/hrms/employee-checkin` | Checkins |
+| `/desk/hrms/expense-claim` | Expense claims |
+| `/desk/hrms/payroll-entry` | Payroll runs |
+| `/desk/hrms/salary-slip` | Salary slips |
 
 Frappe Desk routes are generated from DocType and Workspace metadata. A DocType route usually follows:
 
 ```text
-/desk/{doctype-route-name}
+/desk/{area}/{doctype-route-name}
 ```
 
 Example:
 
 ```text
-Employee -> /desk/employee
-Salary Slip -> /desk/salary-slip
-HD Ticket -> /desk/hd-ticket
+Employee -> /desk/hrms/employee
+Salary Slip -> /desk/hrms/salary-slip
+Customer -> /desk/erp/customer
 ```
 
 ## Route Connection Flow
@@ -533,8 +534,9 @@ Forward path from main suite:
 ```text
 /desk
   -> app launcher/dropdown
-      -> /desk              ERP/Admin
-      -> /desk/hr-setup     HRMS manager/admin
+      -> /desk/erp          ERP
+      -> /desk/hrms         HRMS manager/admin
+      -> /desk/admin        Admin
       -> /crm               CRM
       -> /helpdesk          Support
       -> /hrms              HRMS employee PWA when opened directly
@@ -545,12 +547,12 @@ Backtracking path:
 ```text
 /crm or /helpdesk
   -> app dropdown
-      -> ERP    -> /desk
-      -> HRMS   -> /desk/hr-setup
+      -> ERP    -> /desk/erp
+      -> HRMS   -> /desk/hrms
       -> CRM    -> /crm
       -> Support -> /helpdesk
 
-/desk/hr-setup
+/desk/hrms
   -> Desk breadcrumb / browser back / app launcher
       -> other Desk workspaces
       -> app launcher apps
@@ -672,18 +674,18 @@ There are two HRMS flows.
 Manager/HR flow:
 
 ```text
-/desk/hr-setup
+/desk/hrms
   -> Employee
-      -> /desk/employee
-      -> /desk/employee/{employeeId}
+      -> /desk/hrms/employee
+      -> /desk/hrms/employee/{employeeId}
   -> Leaves
-      -> /desk/leave-application
+      -> /desk/hrms/leave-application
   -> Attendance
-      -> /desk/attendance
-      -> /desk/employee-checkin
+      -> /desk/hrms/attendance
+      -> /desk/hrms/employee-checkin
   -> Payroll
-      -> /desk/payroll-entry
-      -> /desk/salary-slip
+      -> /desk/hrms/payroll-entry
+      -> /desk/hrms/salary-slip
 ```
 
 Employee PWA flow:
@@ -754,11 +756,11 @@ Forward path:
 Example:
 
 ```text
-/desk
+/desk/erp
   -> Selling
       -> Customer
-          -> /desk/customer
-              -> /desk/customer/{customerId}
+          -> /desk/erp/customer
+              -> /desk/erp/customer/{customerId}
 ```
 
 Backtracking path:
@@ -954,7 +956,7 @@ Install buttons:
 | HRMS employee profile | `patches/hrms/frontend/src/views/Profile.vue` |
 | HRMS Desk dropdown | `patches/hrms/hrms/public/js/hirerabbits_desk_install.js` |
 
-ERPNext currently has no separate installable app. If an ERP install action is added later, it should install/open the main Desk route `/desk`.
+ERPNext currently has no separate installable app. If an ERP install action is added later, it should install/open `/desk/erp`.
 
 ## Patch Overlay Map
 
@@ -968,7 +970,7 @@ The custom code is intentionally small.
 | `patches/helpdesk/desk/src/components/layouts/Sidebar.vue` | Helpdesk | Adds install action and Hire Rabbits help title |
 | `patches/helpdesk/desk/src/components/layouts/MobileSidebar.vue` | Helpdesk | Adds mobile install action |
 | `patches/helpdesk/desk/vite.config.js` | Helpdesk | Rebrands PWA manifest |
-| `patches/hrms/hrms/hooks.py` | HRMS | Sets HRMS Desk home to `/desk/hr-setup`, includes custom Desk JS |
+| `patches/hrms/hrms/hooks.py` | HRMS | Sets HRMS Desk home to `/desk/hrms`, includes custom Desk JS |
 | `patches/hrms/hrms/public/js/hirerabbits_desk_install.js` | HRMS Desk | Adds Install app item to HR Setup dropdown |
 | `patches/hrms/frontend/src/components/InstallPrompt.vue` | HRMS employee PWA | Rebrands install prompt and handles install event |
 | `patches/hrms/frontend/src/views/Profile.vue` | HRMS employee PWA | Adds Install app row in profile settings |
@@ -1055,7 +1057,7 @@ These are the next decisions before heavy customization:
 2. Company/department scoping rules for records.
 3. Whether CRM contacts should sync into ERPNext Customer/Contact.
 4. Whether Helpdesk customers should sync into ERPNext Customer/Contact.
-5. Whether ERP install should mean browser PWA for `/desk`.
+5. Whether ERP install should mean browser PWA for `/desk/erp`.
 6. Production database provider: local MariaDB, managed MariaDB, or cloud VM MariaDB.
 7. Backup plan for database plus private/public files.
 
