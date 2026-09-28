@@ -86,6 +86,10 @@ if [ ! -d "sites/$SITE" ]; then
     --set-default
 fi
 
+mkdir -p "sites/$SITE/public/files"
+cp /tmp/suite-brand/hirerabbits-banner.png "sites/$SITE/public/files/hirerabbits-banner.png"
+cp /tmp/suite-brand/hirerabbits-icon.png "sites/$SITE/public/files/hirerabbits-icon.png"
+
 install_app() {
   app="$1"
 

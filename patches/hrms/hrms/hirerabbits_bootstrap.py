@@ -89,6 +89,26 @@ PARENTS = {
 	),
 }
 
+SINGLES = {
+	("System Settings", "app_name"): "Hire Rabbits",
+	("System Settings", "otp_issuer_name"): "Hire Rabbits",
+	("Website Settings", "app_name"): "Hire Rabbits",
+	("Website Settings", "title_prefix"): "Hire Rabbits",
+	("Website Settings", "favicon"): "/files/hirerabbits-icon.png",
+	("Website Settings", "app_logo"): "/files/hirerabbits-banner.png",
+	("Website Settings", "splash_image"): "/files/hirerabbits-banner.png",
+	("Website Settings", "brand_html"): '<img src="/files/hirerabbits-banner.png" alt="Hire Rabbits" style="height:32px; width:auto;">',
+	("Website Settings", "banner_html"): '<img src="/files/hirerabbits-banner.png" alt="Hire Rabbits" style="max-width:260px; height:auto;">',
+	("Website Settings", "footer_powered"): '<span class="text-muted">Hire Rabbits</span>',
+	("Navbar Settings", "app_logo"): "/files/hirerabbits-banner.png",
+	("OAuth Settings", "resource_name"): "Hire Rabbits Application",
+}
+
+WORKSPACES = {
+	"ERPNext Settings": "Hire Rabbits Settings",
+	"Frappe CRM": "Hire Rabbits CRM",
+}
+
 
 def apply():
 	for name, values in APP_ICONS.items():
@@ -107,6 +127,14 @@ def apply():
 		for child in children:
 			if frappe.db.exists("Desktop Icon", child):
 				frappe.db.set_value("Desktop Icon", child, "parent_icon", parent, update_modified=False)
+
+	for (doctype, field), value in SINGLES.items():
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.set_single_value(doctype, field, value)
+
+	for name, label in WORKSPACES.items():
+		if frappe.db.exists("Workspace", name):
+			frappe.db.set_value("Workspace", name, {"title": label, "label": label}, update_modified=False)
 
 	frappe.clear_cache()
 	frappe.db.commit()
