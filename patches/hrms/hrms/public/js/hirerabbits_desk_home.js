@@ -23,12 +23,20 @@
 		frappe.hirerabbitsRouteAreas = { ...(frappe.hirerabbitsRouteAreas || {}), ...fallbackRoutes };
 
 		const slug = (value) => String(value || "").toLowerCase().replace(/ /g, "-");
+		const appArea = (app) => ({
+			erpnext: "erp",
+			frappe: "admin",
+			hrms: "hrms",
+			india_payroll: "hrms",
+			crm: "crm",
+			helpdesk: "helpdesk",
+		}[app]);
+		const moduleArea = (module) => appArea(frappe.boot?.module_app?.[module] || frappe.boot?.module_app?.[slug(module)]);
 		const currentArea = () => location.pathname.match(/^\/desk\/(erp|hrms|admin)(\/|$)/)?.[1];
 		const routeArea = (route) => frappe.hirerabbitsRouteAreas?.[slug(route)];
 		const workspaceArea = (route) => {
 			const page = (frappe.boot?.allowed_workspaces || []).find((page) => slug(page.name) === slug(route));
-			const app = page?.app || frappe.boot?.module_app?.[slug(page?.module)];
-			return { erpnext: "erp", frappe: "admin", hrms: "hrms", india_payroll: "hrms" }[app];
+			return appArea(page?.app) || moduleArea(page?.module);
 		};
 		const areaForRoute = (route, fallback) => roots[route] || workspaceArea(route) || routeArea(route) || fallback;
 		const normalizeDeskPath = (path, fallback) => {
@@ -50,6 +58,39 @@
 			});
 		};
 		frappe.hirerabbitsNormalizeLinks = normalizeLinks;
+
+		const installBreadcrumbGuard = () => {
+			if (!frappe.breadcrumbs || frappe.breadcrumbs.hirerabbitsNamespaces) return;
+			frappe.breadcrumbs.hirerabbitsNamespaces = true;
+			const originalGetDoctypeModule = frappe.breadcrumbs.get_doctype_module.bind(frappe.breadcrumbs);
+			frappe.breadcrumbs.get_doctype_module = function (doctype) {
+				const module = originalGetDoctypeModule(doctype);
+				const area = currentArea();
+				const preferredArea = moduleArea(module) || workspaceArea(module);
+				return area && preferredArea && preferredArea !== area ? "" : module;
+			};
+
+			const originalSetWorkspaceBreadcrumb = frappe.breadcrumbs.set_workspace_breadcrumb.bind(frappe.breadcrumbs);
+			frappe.breadcrumbs.set_workspace_breadcrumb = function (breadcrumbs) {
+				const area = currentArea();
+				if (area && workspaceArea(breadcrumbs.workspace) !== area) {
+					delete breadcrumbs.workspace;
+					this.set_workspace(breadcrumbs);
+				}
+				const sidebar = frappe.app?.sidebar;
+				const oldTitle = sidebar?.sidebar_title;
+				const workspace = workspaceArea(breadcrumbs.workspace) === area ? breadcrumbs.workspace : null;
+				if (sidebar && workspace && (workspaceArea(oldTitle) || moduleArea(oldTitle)) !== area) {
+					sidebar.sidebar_title = workspace;
+				}
+				try {
+					return originalSetWorkspaceBreadcrumb(breadcrumbs);
+				} finally {
+					if (sidebar) sidebar.sidebar_title = oldTitle;
+				}
+			};
+		};
+		installBreadcrumbGuard();
 
 		const originalConvert = frappe.router.convert_to_standard_route.bind(frappe.router);
 		frappe.router.convert_to_standard_route = function (route) {

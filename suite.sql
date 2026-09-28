@@ -860,7 +860,7 @@ INSERT INTO `tabAccount` VALUES
 ('Office Equipment - RR','2026-09-22 15:21:02.316837','2026-09-22 15:21:02.316837','Administrator','Administrator',0,0,0,'Office Equipment','',0,'Rabbits','Asset','Balance Sheet','INR','Fixed Assets - RR','Tangible Assets','Fixed Asset',0.000000000,'No','',37,38,NULL,0,NULL,NULL,NULL,NULL),
 ('Office Maintenance Expenses - RR','2026-09-22 15:21:02.469163','2026-09-22 15:21:02.469163','Administrator','Administrator',0,0,0,'Office Maintenance Expenses','',0,'Rabbits','Expense','Profit and Loss','INR','Indirect Expenses - RR','Operating Expenses','',0.000000000,'No','',83,84,NULL,0,NULL,NULL,NULL,NULL),
 ('Office Rent - RR','2026-09-22 15:21:02.475851','2026-09-22 15:21:02.475851','Administrator','Administrator',0,0,0,'Office Rent','',0,'Rabbits','Expense','Profit and Loss','INR','Indirect Expenses - RR','Operating Expenses','',0.000000000,'No','',85,86,NULL,0,NULL,NULL,NULL,NULL),
-('Payroll Payable - RR','2026-09-22 15:21:02.666123','2026-09-22 15:21:02.666123','Administrator','Administrator',0,0,0,'Payroll Payable','',0,'Rabbits','Liability','Balance Sheet','INR','Accounts Payable - RR','Other Payables','',0.000000000,'No','',132,133,NULL,0,NULL,NULL,NULL,NULL),
+('Payroll Payable - RR','2026-09-22 15:21:02.666123','2026-09-22 15:21:02.666123','Administrator','Administrator',0,0,0,'Payroll Payable','',0,'Rabbits','Liability','Balance Sheet','INR','Accounts Payable - RR','Other Payables','Payable',0.000000000,'No','',132,133,NULL,0,NULL,NULL,NULL,NULL),
 ('Plants and Machineries - RR','2026-09-22 15:21:02.323318','2026-09-22 15:21:02.323318','Administrator','Administrator',0,0,0,'Plants and Machineries','',0,'Rabbits','Asset','Balance Sheet','INR','Fixed Assets - RR','Tangible Assets','Fixed Asset',0.000000000,'No','',39,40,NULL,0,NULL,NULL,NULL,NULL),
 ('Postal Expenses - RR','2026-09-22 15:21:02.482639','2026-09-22 15:21:02.482639','Administrator','Administrator',0,0,0,'Postal Expenses','',0,'Rabbits','Expense','Profit and Loss','INR','Indirect Expenses - RR','Operating Expenses','',0.000000000,'No','',87,88,NULL,0,NULL,NULL,NULL,NULL),
 ('Print and Stationery - RR','2026-09-22 15:21:02.488614','2026-09-22 15:21:02.488614','Administrator','Administrator',0,0,0,'Print and Stationery','',0,'Rabbits','Expense','Profit and Loss','INR','Indirect Expenses - RR','Operating Expenses','',0.000000000,'No','',89,90,NULL,0,NULL,NULL,NULL,NULL),
@@ -76265,6 +76265,108 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 --
 -- Dumping routines for database '_b92b2ce89c02344d'
 --
+
+--
+-- Hire Rabbits demo HRMS / India Payroll seed
+--
+
+DELETE FROM `tabSingles`
+WHERE `doctype`='Payroll Settings'
+AND `field` IN (
+'payroll_based_on',
+'consider_unmarked_attendance_as',
+'enable_multi_company_payroll',
+'enable_professional_tax',
+'enable_esic',
+'enable_lwf',
+'enable_epf',
+'tds_sandbox_mode'
+);
+
+INSERT INTO `tabSingles` (`doctype`, `field`, `value`) VALUES
+('Payroll Settings','payroll_based_on','Attendance'),
+('Payroll Settings','consider_unmarked_attendance_as','Absent'),
+('Payroll Settings','enable_multi_company_payroll','1'),
+('Payroll Settings','enable_professional_tax','1'),
+('Payroll Settings','enable_esic','1'),
+('Payroll Settings','enable_lwf','1'),
+('Payroll Settings','enable_epf','1'),
+('Payroll Settings','tds_sandbox_mode','1');
+
+INSERT INTO `tabIndia Payroll Company Setting`
+(`name`,`creation`,`modified`,`modified_by`,`owner`,`docstatus`,`idx`,`company`,`esic_registration_number`,`epf_establishment_code`,`professional_tax_registration_number`,`lwf_registration_number`,`parent`,`parentfield`,`parenttype`)
+VALUES
+('Rabbits India Payroll Setting','2026-09-22 15:40:00.000000','2026-09-22 15:40:00.000000','Administrator','Administrator',0,1,'Rabbits','12345678901234567','MH/BAN/1234567','PTRC-DEMO-001','LWF-DEMO-001','Payroll Settings','company_payroll_settings','Payroll Settings')
+ON DUPLICATE KEY UPDATE
+`company`=VALUES(`company`),
+`esic_registration_number`=VALUES(`esic_registration_number`),
+`epf_establishment_code`=VALUES(`epf_establishment_code`),
+`professional_tax_registration_number`=VALUES(`professional_tax_registration_number`),
+`lwf_registration_number`=VALUES(`lwf_registration_number`),
+`parent`=VALUES(`parent`),
+`parentfield`=VALUES(`parentfield`),
+`parenttype`=VALUES(`parenttype`);
+
+UPDATE `tabEmployee`
+SET
+`ctc`=540000.000000000,
+`salary_currency`='INR',
+`salary_mode`='Bank',
+`bank_name`='Demo Bank',
+`bank_ac_no`='000123456789',
+`uan_number`='100200300400',
+`pf_name`='Anni',
+`ifsc_code`='HDFC0000001',
+`payment_mode`='NEFT',
+`account_type`='Salary',
+`esic_card_no`='3100000001',
+`pan_number`='ABCDE1234F'
+WHERE `name`='HR-EMP-00001';
+
+INSERT INTO `tabSalary Structure`
+(`name`,`creation`,`modified`,`modified_by`,`owner`,`docstatus`,`idx`,`company`,`is_active`,`is_default`,`currency`,`salary_slip_based_on_timesheet`,`payroll_frequency`,`total_earning`,`total_deduction`,`net_pay`)
+VALUES
+('Rabbits Monthly India Payroll','2026-09-22 15:41:00.000000','2026-09-22 15:41:00.000000','Administrator','Administrator',1,0,'Rabbits','Yes','Yes','INR',0,'Monthly',45000.000000000,0.000000000,45000.000000000)
+ON DUPLICATE KEY UPDATE
+`docstatus`=VALUES(`docstatus`),
+`company`=VALUES(`company`),
+`is_active`=VALUES(`is_active`),
+`is_default`=VALUES(`is_default`),
+`currency`=VALUES(`currency`),
+`payroll_frequency`=VALUES(`payroll_frequency`),
+`total_earning`=VALUES(`total_earning`),
+`net_pay`=VALUES(`net_pay`);
+
+INSERT INTO `tabSalary Detail`
+(`name`,`creation`,`modified`,`modified_by`,`owner`,`docstatus`,`idx`,`salary_component`,`abbr`,`amount`,`depends_on_payment_days`,`is_tax_applicable`,`default_amount`,`parent`,`parentfield`,`parenttype`)
+VALUES
+('Rabbits Basic Pay','2026-09-22 15:41:00.000000','2026-09-22 15:41:00.000000','Administrator','Administrator',1,1,'Basic','B',30000.000000000,1,1,30000.000000000,'Rabbits Monthly India Payroll','earnings','Salary Structure'),
+('Rabbits House Rent Allowance','2026-09-22 15:41:00.000000','2026-09-22 15:41:00.000000','Administrator','Administrator',1,2,'House Rent Allowance','HRA',15000.000000000,1,1,15000.000000000,'Rabbits Monthly India Payroll','earnings','Salary Structure')
+ON DUPLICATE KEY UPDATE
+`amount`=VALUES(`amount`),
+`default_amount`=VALUES(`default_amount`),
+`parent`=VALUES(`parent`),
+`parentfield`=VALUES(`parentfield`),
+`parenttype`=VALUES(`parenttype`);
+
+INSERT INTO `tabSalary Structure Assignment`
+(`name`,`creation`,`modified`,`modified_by`,`owner`,`docstatus`,`idx`,`employee`,`employee_name`,`salary_structure`,`from_date`,`income_tax_slab`,`company`,`payroll_payable_account`,`currency`,`base`,`annual_gross_earning`,`ctc`,`employment_state`,`epf_applicable`,`contribute_on_actual_pf_wage`,`vpf_mode`,`vpf_amount`)
+VALUES
+('HR-EMP-00001-India Payroll Assignment','2026-09-22 15:42:00.000000','2026-09-22 15:42:00.000000','Administrator','Administrator',1,0,'HR-EMP-00001','Anni','Rabbits Monthly India Payroll','2026-01-01','New Tax Regime: 2025-2026','Rabbits','Payroll Payable - RR','INR',45000.000000000,540000.000000000,540000.000000000,'Maharashtra',1,0,'Amount',0.000000000)
+ON DUPLICATE KEY UPDATE
+`docstatus`=VALUES(`docstatus`),
+`salary_structure`=VALUES(`salary_structure`),
+`from_date`=VALUES(`from_date`),
+`income_tax_slab`=VALUES(`income_tax_slab`),
+`company`=VALUES(`company`),
+`payroll_payable_account`=VALUES(`payroll_payable_account`),
+`currency`=VALUES(`currency`),
+`base`=VALUES(`base`),
+`annual_gross_earning`=VALUES(`annual_gross_earning`),
+`ctc`=VALUES(`ctc`),
+`employment_state`=VALUES(`employment_state`),
+`epf_applicable`=VALUES(`epf_applicable`);
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
