@@ -5,6 +5,11 @@ SITE="${SITE:-suite.localhost}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-admin}"
 BENCH=/home/frappe/frappe-bench
+LOCAL_APPS=/tmp/suite-apps
+
+if [ -d "$LOCAL_APPS/apps/frappe" ]; then
+  LOCAL_APPS="$LOCAL_APPS/apps"
+fi
 
 FRAPPE_BRANCH="${FRAPPE_BRANCH:-version-16}"
 ERPNEXT_BRANCH="${ERPNEXT_BRANCH:-version-16}"
@@ -16,8 +21,37 @@ CRM_BRANCH="${CRM_BRANCH:-main}"
 
 cd /home/frappe
 
+local_app_path() {
+  app="$1"
+
+  if [ -d "$LOCAL_APPS/$app" ]; then
+    printf '%s/%s\n' "$LOCAL_APPS" "$app"
+  fi
+}
+
+prepare_local_git_app() {
+  app="$1"
+  path="$(local_app_path "$app" || true)"
+
+  if [ -n "$path" ] && [ ! -d "$path/.git" ]; then
+    (
+      cd "$path"
+      git init -q
+      git config user.email suite@example.com
+      git config user.name "Rabbit Suite"
+      git add -A
+      git commit -qm "Local app source"
+    )
+  fi
+}
+
 if [ ! -d "$BENCH" ]; then
-  bench init --skip-redis-config-generation --frappe-branch "$FRAPPE_BRANCH" frappe-bench
+  if [ -d "$(local_app_path frappe || true)" ]; then
+    prepare_local_git_app frappe
+    bench init --skip-redis-config-generation --frappe-path "$(local_app_path frappe)" frappe-bench
+  else
+    bench init --skip-redis-config-generation --frappe-branch "$FRAPPE_BRANCH" frappe-bench
+  fi
 fi
 
 cd "$BENCH"
@@ -37,6 +71,9 @@ get_app() {
 
   if [ -d "apps/$app" ]; then
     echo "app exists: $app"
+  elif [ -d "$(local_app_path "$app" || true)" ]; then
+    prepare_local_git_app "$app"
+    bench get-app "$(local_app_path "$app")"
   else
     bench get-app --branch "$branch" "$url"
   fi

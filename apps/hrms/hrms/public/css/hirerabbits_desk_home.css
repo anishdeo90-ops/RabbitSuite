@@ -1,0 +1,131 @@
+/* HireRabbits: brighter /desk home. Styles only frappe's Desktop page (.desktop-wrapper).
+   Frappe rebuilds that page on every visit, so everything here is pure CSS and re-applies itself. */
+
+/* ---------- background: soft brand glows + faint dot grid ---------- */
+.desktop-wrapper {
+	position: relative;
+	isolation: isolate;
+	min-height: 100vh;
+}
+.desktop-wrapper::before {
+	content: "";
+	position: fixed;
+	inset: -20%;
+	z-index: -1;
+	pointer-events: none;
+	background:
+		radial-gradient(28% 32% at 18% 18%, rgba(167, 139, 250, 0.35), transparent 70%),
+		radial-gradient(26% 30% at 85% 30%, rgba(147, 197, 253, 0.38), transparent 70%),
+		radial-gradient(30% 30% at 50% 90%, rgba(94, 234, 212, 0.3), transparent 70%);
+	animation: hr-drift 24s ease-in-out infinite alternate;
+}
+.desktop-wrapper::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background-image: radial-gradient(rgba(23, 26, 31, 0.06) 1px, transparent 1px);
+	background-size: 22px 22px;
+	-webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+	mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+[data-theme="dark"] .desktop-wrapper::before { opacity: 0.45; }
+[data-theme="dark"] .desktop-wrapper::after { background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px); }
+@keyframes hr-drift { to { transform: translate(3%, 2%) scale(1.05); } }
+
+/* ---------- frosted navbar ---------- */
+.desktop-wrapper .desktop-navbar {
+	background: color-mix(in srgb, var(--bg-color, #fff) 60%, transparent);
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
+	border-bottom: 1px solid color-mix(in srgb, var(--border-color, #e6e8ec) 80%, transparent);
+}
+
+/* ---------- greeting (inserted by hirerabbits_desk_home.js) ---------- */
+.hr-hello {
+	text-align: center;
+	padding: 56px 16px 0;
+	animation: hr-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hr-hello h1 {
+	margin: 0 0 6px;
+	font-size: clamp(24px, 3.4vw, 32px);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--heading-color, var(--text-color));
+}
+.hr-hello p { margin: 0; color: var(--text-muted); font-size: 15px; }
+.hr-hello + .desktop-container .icons-container { margin-top: 24px; }
+
+/* ---------- app tiles as glass cards (not in edit mode, not inside folders) ---------- */
+.desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon {
+	--c: #8a8f99;
+	height: auto;
+	width: 140px;
+	padding: 20px 12px 14px;
+	gap: 14px;
+	background: color-mix(in srgb, var(--card-bg, #fff) 78%, transparent);
+	border: 1px solid color-mix(in srgb, var(--border-color, #e6e8ec) 90%, transparent);
+	border-radius: 22px;
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	box-shadow: 0 1px 2px rgba(20, 24, 33, 0.04), 0 8px 24px -14px rgba(20, 24, 33, 0.18);
+	overflow: hidden;
+	transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s, border-color 0.25s;
+	animation: hr-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon::before {
+	content: "";
+	position: absolute;
+	left: -20%;
+	right: -20%;
+	bottom: -60%;
+	height: 90%;
+	border-radius: 50%;
+	background: var(--c);
+	opacity: 0;
+	filter: blur(30px);
+	transition: opacity 0.3s;
+	pointer-events: none;
+}
+.desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon:hover {
+	transform: translateY(-6px);
+	border-color: color-mix(in srgb, var(--c) 35%, transparent);
+	box-shadow: 0 2px 4px rgba(20, 24, 33, 0.04), 0 22px 40px -18px color-mix(in srgb, var(--c) 55%, transparent);
+}
+.desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon:hover::before { opacity: 0.16; }
+.desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon:active { transform: translateY(-2px) scale(0.98); }
+.desktop-wrapper .desktop-container > .icons-container > .icons > .desktop-icon .icon-container,
+.desktop-wrapper .desktop-container > .icons-container > .icons > .desktop-icon .icon-caption { position: relative; }
+
+/* staggered entrance */
+.desktop-container .icons > .desktop-icon:nth-child(1) { animation-delay: 0.15s; }
+.desktop-container .icons > .desktop-icon:nth-child(2) { animation-delay: 0.22s; }
+.desktop-container .icons > .desktop-icon:nth-child(3) { animation-delay: 0.29s; }
+.desktop-container .icons > .desktop-icon:nth-child(4) { animation-delay: 0.36s; }
+.desktop-container .icons > .desktop-icon:nth-child(5) { animation-delay: 0.43s; }
+.desktop-container .icons > .desktop-icon:nth-child(6) { animation-delay: 0.5s; }
+.desktop-container .icons > .desktop-icon:nth-child(n + 7) { animation-delay: 0.57s; }
+@keyframes hr-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- corner rabbit (canvas added by hirerabbits_desk_home.js) ---------- */
+#hr-bunny {
+	position: fixed;
+	right: 12px;
+	bottom: -38px;
+	width: 240px;
+	height: 240px;
+	z-index: 5;
+	pointer-events: none;
+	display: none;
+}
+@media (max-width: 600px) {
+	#hr-bunny { width: 170px; height: 170px; bottom: -27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.desktop-wrapper::before,
+	.hr-hello,
+	.desktop-container .icons > .desktop-icon { animation: none !important; transition: none !important; }
+}

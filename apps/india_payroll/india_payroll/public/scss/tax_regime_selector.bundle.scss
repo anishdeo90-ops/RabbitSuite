@@ -1,0 +1,33 @@
+.regime-radio-card {
+	transition: box-shadow 0.1s;
+}
+/* Submitted SSAs render read-only cards (.no-hover); skip the hover ring for them. */
+.regime-radio-card:not(.no-hover):hover {
+	box-shadow: 0 0 0 1px var(--gray-400);
+}
+.section-header-row:hover {
+	background: var(--gray-50);
+}
+
+/* The top filter controls render a .form-group with Bootstrap's default
+   margin-bottom: 1rem, adding dead space below the row. Drop it so the page body
+   (the comparison cards) sits tighter; the card/panel max-height is bumped by 1rem
+   to keep the bottom border where it was. */
+#payroll-period-wrapper .form-group,
+#employee-field-wrapper .form-group,
+#annual-gross-wrapper .form-group {
+	margin-bottom: 0;
+}
+
+/* The regime cards lay out the radio themselves, so drop frappe's forced 8px
+   right margin (input[type="radio"]{margin-right:8px!important}) and give the
+   control a 2px ring. --checkbox-size drives both width (set !important upstream)
+   and height; the border lives on the ::before, and the input[type="radio"]
+   prefix is needed to outweigh frappe's :before rule. */
+input[type="radio"].regime-radio {
+	--checkbox-size: 16px;
+	margin-right: 0 !important;
+}
+input[type="radio"].regime-radio::before {
+	border-width: 2px;
+}

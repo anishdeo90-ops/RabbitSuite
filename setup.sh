@@ -7,6 +7,7 @@ docker compose up -d suite-mariadb suite-redis suite-frappe
 docker compose cp install.sh suite-frappe:/tmp/install-suite.sh
 docker compose cp patches suite-frappe:/tmp/suite-patches
 docker compose cp brand suite-frappe:/tmp/suite-brand
+docker compose cp apps suite-frappe:/tmp/suite-apps
 docker compose exec -T suite-frappe bash /tmp/install-suite.sh
 docker compose restart suite-frappe
 
