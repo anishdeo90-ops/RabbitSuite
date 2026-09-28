@@ -27,9 +27,9 @@ add_to_apps_screen = [
 app_include_js = [
 	"hrms.bundle.js",
 	"/assets/hrms/js/hirerabbits_desk_install.js?v=3",
-	"/assets/hrms/js/hirerabbits_desk_home.js?v=6",
+	"/assets/hrms/js/hirerabbits_desk_home.js?v=11",
 ]
-app_include_css = ["hrms.bundle.css", "/assets/hrms/css/hirerabbits_desk_home.css?v=1"]
+app_include_css = ["hrms.bundle.css", "/assets/hrms/css/hirerabbits_desk_home.css?v=9"]
 
 # website
 

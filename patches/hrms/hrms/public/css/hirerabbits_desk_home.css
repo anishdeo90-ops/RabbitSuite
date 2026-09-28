@@ -42,21 +42,179 @@
 	border-bottom: 1px solid color-mix(in srgb, var(--border-color, #e6e8ec) 80%, transparent);
 }
 
-/* ---------- greeting (inserted by hirerabbits_desk_home.js) ---------- */
-.hr-hello {
-	text-align: center;
-	padding: 56px 16px 0;
-	animation: hr-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* ---------- home dashboard (inserted by hirerabbits_desk_home.js) ---------- */
+/* the sidebar replaces the tile grid; tiles come back in Edit mode so the launcher stays editable */
+.desktop-wrapper:not([data-mode="Edit"]):has(.hr-home) .desktop-container { display: none; }
+.desktop-wrapper[data-mode="Edit"] .hr-home { display: none; }
+
+.hr-home {
+	--hr-card: color-mix(in srgb, var(--card-bg, #fff) 82%, transparent);
+	--hr-line: color-mix(in srgb, var(--border-color, #e6e8ec) 90%, transparent);
+	display: grid;
+	grid-template-columns: 232px minmax(0, 1fr);
+	min-height: calc(100vh - var(--desktop-navbar-height, 52px));
+	text-align: left;
+	background: var(--bg-color, #fff);
 }
+.hr-home a { color: inherit; text-decoration: none; }
+
+/* sidebar */
+.hr-side {
+	position: sticky;
+	top: var(--desktop-navbar-height, 52px);
+	align-self: start;
+	height: calc(100vh - var(--desktop-navbar-height, 52px));
+	overflow-y: auto;
+	padding: 16px 12px 40px;
+	border-right: 1px solid var(--hr-line);
+	background: var(--subtle-fg, #f8f8f8);
+}
+.hr-nav {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 9px 12px;
+	border: 0;
+	border-radius: 10px;
+	background: transparent;
+	font-size: 15px;
+	color: var(--text-color);
+	cursor: pointer;
+	text-align: left;
+}
+.hr-nav:hover { background: var(--hr-line); }
+.hr-nav.active { background: color-mix(in srgb, var(--blue-500, #0a84ff) 12%, transparent); color: var(--blue-600, #0a6fdc); font-weight: 600; }
+.hr-nav-glyph { width: 24px; height: 24px; display: inline-grid; place-items: center; flex: none; }
+.hr-nav-glyph img { width: 24px; height: 24px; border-radius: 6px; object-fit: contain; }
+.hr-nav-head { margin: 18px 10px 6px; font-size: 12px; color: var(--text-muted); }
+
+/* main */
+.hr-main { padding: 28px clamp(16px, 3vw, 36px) 80px; min-width: 0; animation: hr-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .hr-hello h1 {
-	margin: 0 0 6px;
-	font-size: clamp(24px, 3.4vw, 32px);
+	margin: 0 0 4px;
+	font-size: clamp(22px, 2.6vw, 28px);
 	font-weight: 700;
 	letter-spacing: -0.02em;
 	color: var(--heading-color, var(--text-color));
 }
-.hr-hello p { margin: 0; color: var(--text-muted); font-size: 15px; }
-.hr-hello + .desktop-container .icons-container { margin-top: 24px; }
+.hr-hello p { margin: 0; color: var(--text-muted); font-size: 14px; }
+
+.hr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 22px 0 30px; }
+.hr-stats:empty { display: none; }
+.hr-stat {
+	--c: var(--gray-500);
+	display: flex;
+	gap: 12px;
+	padding: 16px;
+	background: var(--hr-card);
+	border: 1px solid var(--hr-line);
+	border-radius: 14px;
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+.hr-stat:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -18px rgba(20, 24, 33, 0.35); }
+.hr-stat[data-k="revenue"] { --c: var(--green-500, #16a34a); }
+.hr-stat[data-k="customers"] { --c: var(--blue-500, #0a84ff); }
+.hr-stat[data-k="tickets"] { --c: var(--red-500, #e03636); }
+.hr-stat[data-k="team"] { --c: var(--yellow-500, #d9a400); }
+.hr-stat-icon {
+	flex: none;
+	width: 36px;
+	height: 36px;
+	display: grid;
+	place-items: center;
+	border-radius: 10px;
+	color: var(--c);
+	background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.hr-stat-icon .icon { stroke: currentColor; }
+.hr-stat-label { display: block; font-size: 13px; color: var(--text-muted); }
+.hr-stat strong { display: block; margin: 2px 0; font-size: 22px; font-weight: 700; color: var(--heading-color, var(--text-color)); }
+.hr-stat small { font-size: 12px; }
+.hr-stat .up { color: var(--green-600, #15803d); }
+.hr-stat .down { color: var(--red-600, #c62a2a); }
+
+/* workspace */
+.hr-ws-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hr-ws-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.hr-views { display: inline-flex; padding: 3px; border-radius: 9px; background: var(--hr-line); }
+.hr-views button, .hr-tabs button { border: 0; background: none; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+.hr-views button { padding: 4px 12px; border-radius: 7px; }
+.hr-views button.active { background: var(--card-bg, #fff); color: var(--text-color); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.hr-tabs { display: flex; gap: 20px; margin: 14px 0 14px; border-bottom: 1px solid var(--hr-line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.hr-tabs button { padding: 0 0 9px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.hr-tabs button.active { color: var(--text-color); font-weight: 600; border-color: var(--text-color); }
+
+.hr-board { display: grid; align-items: start; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.hr-col {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px;
+	border-radius: 12px;
+	background: color-mix(in srgb, var(--dot) 9%, transparent);
+}
+.hr-col header { display: flex; align-items: center; gap: 7px; padding: 2px 4px 4px; font-size: 13px; font-weight: 600; }
+.hr-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot); flex: none; }
+.hr-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 10px 12px;
+	background: var(--card-bg, #fff);
+	border: 1px solid var(--hr-line);
+	border-radius: 10px;
+	font-size: 13px;
+	box-shadow: 0 1px 2px rgba(20, 24, 33, 0.04);
+	transition: transform 0.15s, box-shadow 0.15s;
+}
+.hr-card:hover { transform: translateY(-1px); box-shadow: 0 8px 18px -12px rgba(20, 24, 33, 0.35); }
+.hr-card-title { font-weight: 500; overflow-wrap: anywhere; }
+.hr-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hr-tag {
+	padding: 1px 8px;
+	border-radius: 6px;
+	font-size: 11.5px;
+	color: var(--text-muted);
+	background: var(--hr-line);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 70%;
+}
+.hr-more { font-size: 12px; color: var(--text-muted); padding: 2px 4px; }
+.hr-more:hover { color: var(--text-color); }
+
+.hr-list { display: flex; flex-direction: column; border: 1px solid var(--hr-line); border-radius: 12px; overflow: hidden; background: var(--hr-card); }
+.hr-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) 130px 130px 28px; align-items: center; gap: 12px; padding: 10px 14px; font-size: 13px; }
+.hr-row + .hr-row { border-top: 1px solid var(--hr-line); }
+.hr-row:hover { background: var(--hr-line); }
+.hr-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hr-row .avatar { grid-column: 5; justify-self: end; }
+.hr-open { display: inline-block; margin-top: 12px; font-size: 13px; color: var(--text-muted) !important; }
+.hr-open:hover { color: var(--text-color) !important; }
+.hr-skel { height: 180px; border-radius: 12px; background: linear-gradient(90deg, var(--hr-line), transparent, var(--hr-line)); background-size: 200% 100%; animation: hr-shimmer 1.2s linear infinite; }
+@keyframes hr-shimmer { to { background-position: -200% 0; } }
+
+@media (max-width: 900px) {
+	.hr-home { grid-template-columns: 1fr; }
+	.hr-side {
+		position: static;
+		height: auto;
+		display: flex;
+		gap: 4px;
+		max-height: none;
+		overflow-x: auto;
+		padding: 10px 16px;
+		border-right: 0;
+		border-bottom: 1px solid var(--hr-line);
+	}
+	.hr-nav-head { display: none; }
+	.hr-nav { width: auto; white-space: nowrap; flex: none; }
+	.hr-row { grid-template-columns: 8px minmax(0, 1fr) 90px 28px; }
+	.hr-row .hr-tag { display: none; }
+	.hr-row .avatar { grid-column: 4; }
+}
 
 /* ---------- app tiles as glass cards (not in edit mode, not inside folders) ---------- */
 .desktop-wrapper:not([data-mode="Edit"]) .desktop-container > .icons-container > .icons > .desktop-icon {
@@ -129,3 +287,10 @@
 	.hr-hello,
 	.desktop-container .icons > .desktop-icon { animation: none !important; transition: none !important; }
 }
+
+.hr-empty { margin: 0; padding: 14px 4px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+/* bigger brand logo in the Desk navbar */
+/* ponytail: banner PNG has transparent padding (logo spans y 31%-94%, x 12%-88%); margins trim it.
+   Swap for a tightly-cropped logo file and drop the margins if the banner is ever re-exported. */
+.desktop-wrapper .navbar-home #brand-logo { height: 64px; width: auto; max-width: none; margin: -20px 0 -4px -16px; }

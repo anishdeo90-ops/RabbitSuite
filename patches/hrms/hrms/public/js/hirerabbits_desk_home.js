@@ -155,21 +155,164 @@
 		return h < 12 ? __("Good morning") : h < 17 ? __("Good afternoon") : __("Good evening");
 	}
 
+	const esc = (s) => frappe.utils.escape_html(s == null ? "" : String(s));
+	const STAT_ICONS = { revenue: "income", customers: "customer", tickets: "support", team: "users" };
+
+	// Sidebar = the same Desktop Icons the launcher shows (boot data, already permission-filtered).
+	// Route logic mirrors frappe's desktop.js get_route(), which isn't reachable (page scripts run in new Function).
+	function iconRoute(icon) {
+		if (icon.link_type === "External" && icon.link) return icon.link;
+		const first = frappe.boot.workspace_sidebar_item?.[icon.label.toLowerCase()]?.items?.find((i) => i.type === "Link");
+		if (!first) return null;
+		if (first.link_type === "URL") return first.url;
+		if (first.link_type === "Report") {
+			const type = first.report?.report_type;
+			return frappe.utils.generate_route({ type: "report", name: first.link_to,
+				is_query_report: type === "Query Report" || type === "Script Report", report_ref_doctype: first.report?.ref_doctype });
+		}
+		const ws = first.link_type === "Workspace" && frappe.workspaces?.[frappe.router.slug(first.link_to)];
+		return frappe.utils.generate_route({ type: first.link_type, name: ws ? ws.title : first.link_to,
+			public: ws ? (ws.public ? 1 : 0) : undefined, route_options: { sidebar: icon.label } });
+	}
+
+	function navLink(icon, fallback) {
+		const route = iconRoute(icon) || fallback;
+		if (!route) return "";
+		const glyph = icon.logo_url
+			? `<img src="${esc(icon.logo_url)}" alt="">`
+			: frappe.utils.icon(icon.icon || "folder-normal", "sm");
+		return `<a class="hr-nav" href="${esc(route)}"><span class="hr-nav-glyph">${glyph}</span><span>${esc(__(icon.label))}</span></a>`;
+	}
+
+	// Apps first, then one section per app listing its modules (the same grouping the launcher folders use).
+	function sidebar() {
+		const all = (frappe.desktop_icons || frappe.boot.desktop_icons || []).filter((i) => !i.hidden);
+		const byIdx = (a, b) => a.idx - b.idx || a.label.localeCompare(b.label);
+		const preferredAppRank = (icon) => {
+			const key = `${icon.name || ""} ${icon.label || ""} ${icon.link || ""}`.toLowerCase();
+			if (/\bcrm\b|\/crm\b/.test(key)) return 0;
+			if (/\berp(next)?\b|\/desk\/erp\b/.test(key)) return 1;
+			return 2;
+		};
+		const appOrder = (a, b) => preferredAppRank(a) - preferredAppRank(b) || byIdx(a, b);
+		const visible = new Set(all.flatMap((i) => [i.name, i.label].filter(Boolean)));
+		const apps = all.filter((i) => !i.parent_icon || !visible.has(i.parent_icon)).sort(appOrder);
+		const kids = (app) => all.filter((i) => i.parent_icon === app.name || i.parent_icon === app.label).sort(byIdx);
+		const appNav = (app) => {
+			const children = kids(app);
+			const own = navLink(app);
+			if (own) return own;
+			if (!children.length) return "";
+			return `<div class="hr-nav-head">${esc(__(app.label))}</div>${children.map((child) => navLink(child)).join("")}`;
+		};
+		return `<a class="hr-nav active" href="/desk"><span class="hr-nav-glyph">${frappe.utils.icon("home", "sm")}</span><span>${__("Home")}</span></a>
+			<div class="hr-nav-head">${__("Apps")}</div>
+			${apps.map(appNav).join("")}`;
+	}
+
+	function statCard(s) {
+		let value = s.value, delta;
+		if (s.key === "revenue") {
+			value = format_currency(s.value, s.currency, 0);
+			delta = s.change_pct == null
+				? `<span class="text-muted">${__("No invoices last month")}</span>`
+				: `<span class="${s.change_pct < 0 ? "down" : "up"}">${s.change_pct < 0 ? "↘" : "↗"} ${Math.abs(s.change_pct)}% ${__("vs last month")}</span>`;
+		} else {
+			delta = s.new_this_month
+				? `<span class="up">↗ +${s.new_this_month} ${__("this month")}</span>`
+				: `<span class="text-muted">${__("None new this month")}</span>`;
+		}
+		return `<a class="hr-stat" data-k="${s.key}" href="${esc(s.route)}">
+			<span class="hr-stat-icon">${frappe.utils.icon(STAT_ICONS[s.key], "md")}</span>
+			<span><span class="hr-stat-label">${esc(__(s.label))}</span><strong>${esc(value)}</strong><small>${delta}</small></span></a>`;
+	}
+
+	const colColor = (c) => (c.color ? `var(--${c.color}-500, var(--gray-500))` : "var(--gray-500)");
+	const card = (c) => `<a class="hr-card" href="${esc(c.route)}"><span class="hr-card-title">${esc(c.title)}</span>
+		<span class="hr-card-foot">${c.tag ? `<span class="hr-tag">${esc(c.tag)}</span>` : "<span></span>"}${c.user ? frappe.avatar(c.user, "avatar-small") : ""}</span></a>`;
+	const avatar = (user) => (user ? frappe.avatar(user, "avatar-small") : "");
+
+	function boardHtml(b, view) {
+		if (view === "list") {
+			const rows = b.cards.map((c) => {
+				const col = b.columns.find((x) => x.status === c.status) || {};
+				return `<a class="hr-row" href="${esc(c.route)}"><span class="hr-dot" style="--dot:${colColor(col)}"></span>
+					<span class="hr-row-title">${esc(c.title)}</span><span class="text-muted">${esc(col.label || c.status)}</span>
+					${c.tag ? `<span class="hr-tag">${esc(c.tag)}</span>` : ""}${avatar(c.user)}</a>`;
+			});
+			return `<div class="hr-list">${rows.join("") || `<p class="text-muted">${__("Nothing here yet")}</p>`}</div>`;
+		}
+		return `<div class="hr-board">${b.columns.map((col) => {
+			const cards = b.cards.filter((c) => c.status === col.status);
+			const more = col.count - cards.length;
+			return `<section class="hr-col" style="--dot:${colColor(col)}">
+				<header><span class="hr-dot"></span>${esc(__(col.label))}<span class="text-muted">${col.count}</span></header>
+				${cards.map(card).join("") || `<p class="hr-empty">${__("Nothing here")}</p>`}
+				${more > 0 ? `<a class="hr-more" href="${esc(b.route)}">+${more} ${__("more")}</a>` : ""}</section>`;
+		}).join("")}</div>`;
+	}
+
+	function renderBoards(root, boards) {
+		const pane = root.querySelector(".hr-workspace");
+		if (!boards.length) return pane.remove();
+		const pref = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+		let tab = boards.some((b) => b.key === pref("hr-home-tab")) ? pref("hr-home-tab") : boards[0].key;
+		let view = pref("hr-home-view") === "list" ? "list" : "board";
+		const draw = () => {
+			const b = boards.find((x) => x.key === tab);
+			pane.querySelector(".hr-tabs").innerHTML = boards.map((x) =>
+				`<button class="${x.key === tab ? "active" : ""}" data-tab="${x.key}">${esc(__(x.label))}</button>`).join("");
+			pane.querySelectorAll(".hr-views button").forEach((el) => el.classList.toggle("active", el.dataset.view === view));
+			pane.querySelector(".hr-open").href = b.route;
+			pane.querySelector(".hr-board-wrap").innerHTML = boardHtml(b, view);
+		};
+		pane.addEventListener("click", (e) => {
+			const t = e.target.closest("[data-tab],[data-view]");
+			if (!t) return;
+			if (t.dataset.tab) pref("hr-home-tab", (tab = t.dataset.tab));
+			if (t.dataset.view) pref("hr-home-view", (view = t.dataset.view));
+			draw();
+		});
+		draw();
+	}
+
+	function buildHome(wrapper) {
+		const name = (frappe.session.user_fullname || frappe.session.user || "").split(" ")[0];
+		const company = frappe.defaults.get_default("company");
+		const home = document.createElement("div");
+		home.className = "hr-home";
+		home.innerHTML = `<nav class="hr-side" aria-label="${__("Apps")}">${sidebar()}</nav>
+			<main class="hr-main">
+				<div class="hr-hello"><h1></h1><p></p></div>
+				<div class="hr-stats"></div>
+				<div class="hr-workspace">
+					<div class="hr-ws-head"><h2>${__("Team workspace")}</h2>
+						<div class="hr-views"><button data-view="board">${__("Board")}</button><button data-view="list">${__("List")}</button></div></div>
+					<div class="hr-tabs" role="tablist"></div>
+					<div class="hr-board-wrap"><div class="hr-skel"></div></div>
+					<a class="hr-open" href="#">${__("Open full view")} →</a>
+				</div>
+			</main>`;
+		home.querySelector("h1").textContent = `${greeting()}, ${name} 👋`;
+		home.querySelector(".hr-hello p").textContent = company
+			? __("Here's what's happening across {0} today.", [company])
+			: new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+		wrapper.querySelector(".desktop-navbar").after(home);
+
+		frappe.xcall("hrms.hirerabbits_home.get_home_data").then((d) => {
+			home.querySelector(".hr-stats").innerHTML = d.stats.map(statCard).join("");
+			renderBoards(home, d.boards);
+			frappe.hirerabbitsNormalizeLinks?.();
+		}).catch(() => {
+			home.querySelector(".hr-board-wrap").innerHTML = `<p class="text-muted">${__("Couldn't load workspace data.")}</p>`;
+		});
+	}
+
 	function decorate() {
 		frappe.hirerabbitsNormalizeLinks?.();
 		const wrapper = document.querySelector(".desktop-wrapper");
 		if (!wrapper) return;
-		const container = wrapper.querySelector(".desktop-container");
-		if (container && !wrapper.querySelector(".hr-hello")) {
-			const name = (frappe.session.user_fullname || frappe.session.user || "").split(" ")[0];
-			const hello = document.createElement("div");
-			hello.className = "hr-hello";
-			hello.innerHTML = "<h1></h1><p></p>";
-			hello.querySelector("h1").textContent = `${greeting()}, ${name} 👋`;
-			hello.querySelector("p").textContent =
-				new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
-			container.before(hello);
-		}
+		if (wrapper.querySelector(".desktop-navbar") && !wrapper.querySelector(".hr-home")) buildHome(wrapper);
 		wrapper.querySelectorAll(".desktop-container .desktop-icon:not([data-hr])").forEach((el) => {
 			el.dataset.hr = "1";
 			const c = COLORS[(el.dataset.id || "").toLowerCase()];
@@ -306,7 +449,7 @@
 		const mouse = { x: -0.6, y: -0.4 };
 		let excited = false, hopT = -1, t = 0, blinkAt = 2, enterT = 0, wasOn = false;
 		const P = { yaw: 0, pitch: 0, ear: 0, splay: 0.18 };
-		const TILE = ".desktop-container .desktop-icon";
+		const TILE = ".desktop-container .desktop-icon, .hr-side .hr-nav, .hr-stat, .hr-card";
 		addEventListener("mousemove", (e) => {
 			const r = canvas.getBoundingClientRect();
 			mouse.x = THREE.MathUtils.clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth / 2), -1, 1);
