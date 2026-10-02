@@ -106,6 +106,7 @@ copy_patch hrms/frontend/src/components/InstallPrompt.vue
 copy_patch hrms/frontend/src/views/Profile.vue
 copy_patch hrms/hrms/hooks.py
 copy_patch hrms/hrms/hirerabbits_bootstrap.py
+copy_patch hrms/hrms/hirerabbits_demo_seed.py
 copy_patch hrms/hrms/hirerabbits_home.py
 copy_patch hrms/hrms/public/js/hirerabbits_desk_install.js
 copy_patch hrms/hrms/public/js/hirerabbits_login_rabbit.js
@@ -147,3 +148,7 @@ install_app crm
 
 bench --site "$SITE" migrate
 bench --site "$SITE" execute hrms.hirerabbits_bootstrap.apply
+
+if [ "${SEED_DEMO_DATA:-1}" = "1" ]; then
+  bench --site "$SITE" execute hrms.hirerabbits_demo_seed.apply
+fi
