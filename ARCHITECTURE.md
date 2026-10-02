@@ -1086,3 +1086,53 @@ Expected response:
 ```json
 {"message":"pong"}
 ```
+
+## Suite Map (Claude)
+
+A clickable map of the live site's metadata, built by Claude Code on 2026-10-02 to help understand the full structure before customizing anything. It only reads the database and does not change app code, patches or data.
+
+Published (private) at: `https://claude.ai/artifact/RC1QakH7mjEQSTYBdqZLVq`
+
+Source files (the only files kept in the repo):
+
+| File | Purpose |
+| --- | --- |
+| `tools/suite-map/extract.py` | Read-only script run inside `suite-frappe`. Dumps DocTypes, Link/Table/Dynamic Link fields, effective permissions (Custom DocPerm overrides DocPerm), roles, role profiles, users, User Permissions, hooks, workflows, workspaces and record counts as JSON. |
+| `tools/suite-map/template.html` | The map page's design and logic, without data. |
+| `tools/suite-map/build.py` | Inlines the JSON into the template. |
+
+Generated output goes to `tmp/suite-map/` (`suite-map.json` and `index.html`). `tmp/` is gitignored, so it is never committed. The data includes user emails, so keep it that way.
+
+What the map shows:
+
+| View | Content |
+| --- | --- |
+| Overview | Per-app DocType and record counts, key findings, suggested reading order |
+| DocTypes | For any DocType: forward links, backlinks (backtracking), child tables, parent of a child table, roles and rights per permission level, hooks that run on it, workspaces listing it |
+| Roles | Users holding the role, role profiles containing it, every DocType it can touch with rights |
+| Users | Roles, linked Employee, User Permissions, combined access |
+| Flows | Identity, HR/payroll, CRM to ERP, Support chains, each step labelled with the real connecting field |
+| Cross-app hooks | `doc_events`, `has_permission`, `permission_query_conditions` and `override_doctype_class` per app, with cross-app ones flagged |
+
+Refresh after changing roles, permissions, DocTypes or seed data:
+
+```bash
+docker cp tools/suite-map/extract.py suite-frappe:/tmp/extract.py
+docker exec suite-frappe bash -lc 'cd /home/frappe/frappe-bench/sites && ../env/bin/python /tmp/extract.py > /tmp/suite-map.json'
+mkdir -p tmp/suite-map
+docker cp suite-frappe:/tmp/suite-map.json tmp/suite-map/suite-map.json
+python tools/suite-map/build.py
+```
+
+Then open `tmp/suite-map/index.html` in a browser, or ask Claude to republish it to the link above.
+
+On Git Bash, prefix the docker commands with `MSYS_NO_PATHCONV=1`.
+
+Findings from the 2026-10-02 extract:
+
+- CRM and ERPNext are not connected. No field links `CRM Deal` to `Customer` or `Sales Order`; the CRM hook that creates an ERP Customer only runs when ERPNext CRM Settings is enabled, and it is off.
+- Helpdesk and ERPNext are not connected. `HD Customer.erpnext_customer` is a plain text field, empty on all records, and ERPNext HD Settings sync is off.
+- Permissions are customized through Custom DocPerm (383 rows). For those DocTypes the shipped defaults no longer apply.
+- No Frappe Workflows exist. Leave and expense approvals use approver fields on `Employee`.
+- `demo.hr`, `demo.sales` and `demo.support` hold System Manager, so they see almost everything and are not realistic role tests.
+- `Employee Self Service` is assigned to no user; the demo employee uses the `Employee` role.
