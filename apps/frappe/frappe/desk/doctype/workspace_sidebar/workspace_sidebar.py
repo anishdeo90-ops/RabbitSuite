@@ -281,7 +281,64 @@ def get_module_info(module_name):
 		}
 	doctype_limit = 3
 	module_info["DocType"] = (module_info.get("DocType") or [])[:doctype_limit]
+	if module_name == "Accounts":
+		module_info = add_accounts_sidebar_shortcuts(
+			module_info, get_workspace_sidebar_shortcuts(["Banking", "Accounts Setup"])
+		)
 	return module_info
+
+
+def add_accounts_sidebar_shortcuts(module_info, sidebar_links):
+	dashboard_items = list(module_info.get("Dashboard") or [])
+	if sidebar_links.get("Banking") and not has_sidebar_item(dashboard_items, "Banking"):
+		dashboard_items.append({**sidebar_links["Banking"], "icon": None})
+
+	sidebar_items = []
+	if sidebar_links.get("Accounts Setup"):
+		sidebar_items.append(sidebar_links["Accounts Setup"])
+
+	return {
+		"Workspace": module_info.get("Workspace"),
+		"Dashboard": dashboard_items,
+		"DocType": [
+			item
+			for item in (module_info.get("DocType") or [])
+			if sidebar_item_label(item) not in ("Bank Clearance", "Mode of Payment", "Monthly Distribution")
+		],
+		"Workspace Sidebar": sidebar_items,
+		"Report": module_info.get("Report"),
+		"Page": module_info.get("Page"),
+	}
+
+
+def get_workspace_sidebar_shortcuts(sidebar_titles):
+	shortcuts = {}
+	for title in sidebar_titles:
+		if not frappe.db.exists("Workspace Sidebar", {"name": title, "for_user": None}):
+			continue
+
+		sidebar = frappe.get_doc("Workspace Sidebar", title)
+		first_link = next((item for item in sidebar.items if item.type == "Link" and item.link_to), None)
+		if not first_link:
+			continue
+
+		shortcuts[title] = {
+			"label": sidebar.title,
+			"link_to": first_link.link_to,
+			"link_type": first_link.link_type,
+			"icon": sidebar.header_icon,
+			"route_options": dumps({"sidebar": sidebar.title}),
+		}
+
+	return shortcuts
+
+
+def has_sidebar_item(items, label):
+	return any(sidebar_item_label(item) == label for item in items)
+
+
+def sidebar_item_label(item):
+	return item.get("label") if isinstance(item, dict) else item
 
 
 def create_sidebar_items(module_info):
@@ -306,7 +363,10 @@ def create_sidebar_items(module_info):
 			idx += 1
 
 		for item in items:
-			item_info = {"label": item, "type": "Link", "link_type": entity, "link_to": item, "idx": idx}
+			if isinstance(item, dict):
+				item_info = {**item, "type": "Link", "idx": idx}
+			else:
+				item_info = {"label": item, "type": "Link", "link_type": entity, "link_to": item, "idx": idx}
 
 			if entity_lower == "report":
 				item_info["child"] = 1
