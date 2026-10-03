@@ -718,6 +718,14 @@ def append_docperms_to_user_type(docperms, doc):
 		doc.append("user_doctypes", args)
 
 
+def after_migrate():
+	update_select_perm_after_install()
+
+	from hrms.hirerabbits_bootstrap import apply
+
+	apply()
+
+
 def update_select_perm_after_install():
 	if not frappe.flags.update_select_perm_after_migrate:
 		return
