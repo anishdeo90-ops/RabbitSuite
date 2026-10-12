@@ -70,6 +70,145 @@ Set `APIFY_TOKEN` in your own environment. Example request bodies; keep `maxTota
 
 For a weekly production search, split roles into focused runs by city/vertical, keep a spend cap, and record actor run ID, search, run date, source URL, job ID, publication date, and capture date. Deduplicate by source job ID and then by company domain + normalized title + location. A repost is one demand signal, not a new hire. Check the employer's own careers page when possible. Keep a 30-day active-posting window; expired jobs move to research history, not active outreach.
 
+### October 2026 scraping lesson: how to get the right lead list
+
+Do not run a broad `India` search and treat the result as an outreach list. The broad LinkedIn run surfaced many large employers and generic BPO/service jobs such as TCS, L&T, Wipro, WNS, EXL, FedEx, JLL, Cummins, and similar accounts. Those rows can be useful for market evidence, but they are usually poor first-wave outreach targets because the buyer is hard to reach, procurement is slow, and the JD may be for a narrow hiring pipeline rather than owner-visible workflow pain.
+
+For first-wave lead generation, scrape in this order:
+
+1. **Naukri first for local Indian company postings.** Use `automly/naukri-jobs-scraper` because it returned richer local-company JDs, salaries, skills, company descriptions, company job pages, and full descriptions. The October 2026 run returned 840 rows for the city/title set below and produced many more plausible local distributor, manufacturer, retail, admin, HR, procurement, inventory, and back-office leads than LinkedIn.
+2. **LinkedIn second for confirmation and higher-profile roles.** Use `bebity/linkedin-jobs-scraper` for public LinkedIn evidence and roles that Naukri misses. Keep it city-specific; do not search all India unless the goal is market mapping rather than outreach.
+3. **Indeed only as a backup.** The pilot Indeed run produced usable descriptions but more stale/noisy rows. Use it when a role/city has too few Naukri and LinkedIn results.
+
+Good first city set, based on the October 2026 pass:
+
+```text
+Ahmedabad, Surat, Indore, Jaipur, Coimbatore, Nagpur, Kochi, Rajkot
+```
+
+These cities are large enough to have active postings but less dominated by global enterprise roles than broad metro searches. Add one city at a time when volume is low. Good next additions are Vadodara, Nashik, Ludhiana, Bhopal, Mysuru, Visakhapatnam, and Chandigarh/Mohali. Avoid mixing every metro and every role in one run; it makes review harder and pulls in large employers.
+
+Use this Naukri input shape. Keep the token out of files and pass it only through environment variables or stdin:
+
+```json
+{
+  "keywords": [
+    "Inventory Executive",
+    "Stores Executive",
+    "Purchase Executive",
+    "HR Executive",
+    "Payroll Executive",
+    "MIS Executive",
+    "Sales Operations Executive",
+    "Back Office Executive"
+  ],
+  "location": "Ahmedabad, Surat, Indore, Jaipur, Coimbatore, Nagpur, Kochi, Rajkot",
+  "maxItems": 120,
+  "includeDetails": true,
+  "sortBy": "date",
+  "postedWithin": "any",
+  "postedBy": "company",
+  "proxyConfiguration": { "useApifyProxy": true }
+}
+```
+
+`POST https://api.apify.com/v2/acts/automly~naukri-jobs-scraper/runs?maxTotalChargeUsd=1&maxItems=120&waitForFinish=180`
+
+Important: in the October 2026 run, the actor returned more rows than the local `maxItems` expectation because the keyword/city combination expands across searches. The Apify `maxTotalChargeUsd=1` cap is the real guardrail. Record `usage_total_usd`, run ID, dataset ID, raw row count, and saved row count after every run.
+
+Save one working CSV and update it in place. Do not create a new spreadsheet for every pass. Keep raw JSON for traceability, but the working CSV should gain review columns:
+
+```text
+my_status
+score
+why
+evidence
+captured_at
+source
+run_id
+source_job_id
+company_name
+job_title
+posting_date
+location
+salary
+experience
+skills
+company_url
+company_jobs_url
+job_url
+posted_by_consultant
+role
+department
+industry
+company_description
+jd_text
+```
+
+The first review pass should not be a hard delete filter. Keep every row and add `my_status` as `RELEVANT`, `MAYBE`, or `NOT OUTREACH FIT`. The goal is to teach the reviewer what good looks like, not to lose evidence. After the review pass, manually inspect the `RELEVANT` rows and pick the best 50-100 for owner/email finding.
+
+Judge relevance from the JD, not the job title. A title like `Back Office Executive` can be excellent if the JD shows a messy workflow. A row like A R Electro Power is relevant because the JD says the role prepares quotations and proforma invoices, enters data in Excel, prepares MIS reports, coordinates with sales and other departments, maintains customer/order records, tracks enquiries, and follows up through WhatsApp/calls. That is exactly the kind of admin workflow Hire Rabbits can discuss. A title like `Sales Executive` can be irrelevant if it is only field sales, cold calling, or target chasing with no operational handoff.
+
+Mark a row `RELEVANT` when the JD or company description shows several of these signals:
+
+| Signal family | Phrases that indicate useful workflow pain |
+| --- | --- |
+| Back-office sales/admin | quotation, proforma invoice, invoice, order records, customer records, enquiry/inquiry tracking, follow-up, email writing, WhatsApp follow-up, data entry, Excel report, MIS report, sales coordination |
+| Procurement/purchase | purchase order, vendor, supplier, sourcing, procurement, price negotiation, material follow-up, PO placement, comparative statement, ERP, approval, delivery follow-up |
+| Inventory/warehouse/logistics | inventory, stock, warehouse, dispatch, GRN, inward/outward, picking, packing, shipment, material movement, bin, cycle count, physical verification, ageing, shortage |
+| HR/payroll/admin | attendance, payroll, HRMS, joining formalities, onboarding, employee records, leave management, statutory compliance, PF, ESI, salary processing, full-and-final, HR MIS |
+| Reporting/reconciliation | MIS, Excel tracker, dashboard, daily/weekly/monthly reports, reconciliation, audit documents, management report, variance, exception |
+
+Boost the row when the company itself looks operations-heavy:
+
+```text
+distributor, distribution, manufacturer, factory, industrial, electrical,
+electronics, pharma, pharmaceutical, medical device, FMCG, retail,
+warehouse, supply chain, logistics, machinery, ceramic, textile,
+automobile spares, food, packaging, building material, components,
+semiconductor, trading
+```
+
+Use caution, but do not blindly discard, when the JD contains sales language. Many good leads have sales-adjacent admin work. Keep the row if sales is connected to quotations, order records, invoices, dispatch, inventory, customer records, MIS, enquiry tracking, or purchase/vendor handoffs. Mark it `NOT OUTREACH FIT` only when it is pure field sales, direct sales, telecalling, retail sales, channel sales, loan/insurance sales, or client acquisition with no back-office or operational workflow.
+
+Usually mark these `NOT OUTREACH FIT` unless the JD has strong workflow evidence:
+
+```text
+recruiter-only roles, blue-collar recruiter, intern/trainee roles,
+BPO/voice process/call center roles, generic business development roles,
+pure field sales roles, teachers/faculty, doctors/nurses, developers,
+SEO/digital marketing/graphic design, very large enterprises, and
+staffing/placement/consultancy-posted jobs.
+```
+
+Do not make the filter too strict. A good first-pass heuristic is:
+
+- `RELEVANT`: several workflow signals plus an ops-heavy company or department.
+- `MAYBE`: one or two workflow signals, unclear company fit, or sales/admin mixed together.
+- `NOT OUTREACH FIT`: no visible operational handoff, or the JD is mostly recruiting, field sales, BPO, or unrelated specialist work.
+
+For each `RELEVANT` or `MAYBE` row, write a short `why` and `evidence` field so the next person can audit the decision quickly. Example:
+
+```text
+my_status: RELEVANT
+why: JD shows quotation/proforma/MIS/customer-record workflow; company is an electrical distributor
+evidence: prepares quotations and proforma invoices; Excel reports/MIS; customer details and order records; enquiry tracking and follow-up
+```
+
+After relevance review, deduplicate by source job ID first, then by normalized company name + normalized title + city. Keep multiple postings from the same company only when they reveal different workflows, for example one purchase role and one HR/payroll role. For outreach, create one account row per company with the best JD evidence attached, not five separate emails to the same employer.
+
+Only after this review should email enrichment start. The correct next owner/email search is based on the workflow:
+
+| Workflow evidence | First person to look for |
+| --- | --- |
+| Quotations, customer/order records, sales coordination | Founder, owner, sales head, operations head |
+| Purchase, vendor, supplier, material follow-up | Owner, procurement head, operations head, plant head |
+| Inventory, stock, warehouse, dispatch | Owner, warehouse head, operations head, supply-chain head |
+| HRMS, attendance, payroll, employee records | Founder, HR head, people-ops lead |
+| MIS, reconciliation, reporting | Founder, finance controller, operations head |
+
+Do not guess personal emails from scraped recruiter contact details. Use the job posting to identify the workflow, then verify the company website, LinkedIn company page, founder/owner/department head, and a lawful business contact path. The first outbound email should reference one observed workflow and ask a discovery question, not claim the company has a broken process.
+
 ## 4. Curated companies from the pilot
 
 The table is a *research queue*. “Angle” is an inference from the JD to test with a human, not a statement about the company's current software. Priorities reflect our likely ability to show a relevant workflow, company size, and JD specificity. Dates are the posting dates returned by the actors.

@@ -1,0 +1,41 @@
+﻿{
+    "captured_at":  "2026-10-10T20:38:12.0924682Z",
+    "actor":  "automly/naukri-jobs-scraper",
+    "run_id":  "pmf8lonW8zFYJ7ddg",
+    "status":  "SUCCEEDED",
+    "dataset_id":  "8EXBVP0M2KHZycGJo",
+    "started_at":  "2026-10-10T20:38:13.018Z",
+    "finished_at":  "2026-10-10T20:43:47.475Z",
+    "usage_total_usd":  1.63137,
+    "max_total_charge_usd":  2,
+    "max_items":  800,
+    "search":  {
+                   "maxItems":  800,
+                   "keywords":  [
+                                    "Back Office Executive",
+                                    "Sales Coordinator",
+                                    "Office Admin Executive",
+                                    "Data Entry Executive",
+                                    "MIS Executive",
+                                    "Purchase Executive",
+                                    "Procurement Executive",
+                                    "Stores Executive",
+                                    "Store Executive",
+                                    "Inventory Executive",
+                                    "Warehouse Executive",
+                                    "Dispatch Executive",
+                                    "Logistics Executive",
+                                    "HR Executive",
+                                    "Payroll Executive",
+                                    "Accounts Executive"
+                                ],
+                   "proxyConfiguration":  {
+                                              "useApifyProxy":  true
+                                          },
+                   "sortBy":  "date",
+                   "postedWithin":  "any",
+                   "postedBy":  "company",
+                   "location":  "Ahmedabad",
+                   "includeDetails":  true
+               }
+}

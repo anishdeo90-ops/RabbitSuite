@@ -2,3 +2,4 @@ frappe-bench/
 tmp/
 *.log
 *.tmp
+leads/**/naukri_ahmedabad_raw.json
