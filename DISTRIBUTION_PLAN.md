@@ -301,6 +301,12 @@ Use one short, specific email to the likely workflow owner. Refer to one observe
 
 These are internal drafts. Verify BabyOrgano’s opening, recipient identity, Mehta Groups’ approval to be named, and the one-tenth cost calculation before sending.
 
+**LinkedIn message after a founder accepts a connection**
+
+Thank them for connecting without implying they have already replied. Name the work in their actual job posting, then explain what the software does with that work: what it tracks, reconciles, and helps the team act on. End with one specific, low-friction meeting request. Keep the message short and verify that every product action mentioned can be shown in a demo.
+
+> Hi Ripul, thanks for connecting. I saw BabyOrgano is hiring to manage FBA and quick-commerce stock, returns, POs, invoices and deliveries. I reached out because I built software that tracks these by SKU and order, shows what needs replenishment, reconciles returns, and follows each PO through invoicing and delivery. Could I show you how it works in a quick 15-minute meeting this week?
+
 For the first 20 accounts, founder-led/manual sending is preferable. Suggested sequence: day 0 tailored email; day 4 one follow-up with a concrete workflow sketch; day 10 final polite close. One recipient per account initially. Measure positive replies and discovery meetings, not open rates alone. Do not auto-send AI-generated copy without human review.
 
 ## 7. Turn JDs into product decisions
