@@ -267,6 +267,40 @@ Use one short, specific email to the likely workflow owner. Refer to one observe
 >
 > The support opening mentions customer calls and coordination with production and vendors for order updates. We are working on keeping the customer conversation, owner, and order context together so follow-ups do not get lost. Is connecting those steps a current priority? If so, I can show a narrow example rather than a generic CRM demo.
 
+**E-commerce example — BabyOrgano, version 1 (hiring cost)**
+
+> Subject: Rick, a thought on your e-commerce ops opening
+>
+> Hey Rick,
+>
+> Saw BabyOrgano is hiring someone to track FBA and quick-commerce stock, reconcile returns, and follow POs through invoicing.
+>
+> That’s why I reached out. We recently put Mehta Groups’ e-commerce orders, returns, POs and invoices in one place. They now cover that coordination work at roughly **10% of the cost of adding another ops hire**.
+>
+> Could I show you what we set up for them and see if it would work for BabyOrgano?
+>
+> Anish Deo
+>
+> CEO, The Back Office Company
+
+**E-commerce example — BabyOrgano, version 2 (result first)**
+
+> Subject: Rick, quick question about the ops role
+>
+> Hey Rick,
+>
+> Your e-commerce ops opening caught my eye—especially the mix of stock tracking across FBA and quick-commerce, returns reconciliation, and PO follow-ups.
+>
+> We just helped Mehta Groups handle their orders, returns, POs and invoices in one workflow. The result was the work getting done at **about one-tenth the cost of another hire**.
+>
+> Would you be open to a quick call? I can show you the Mehta Groups workflow and we can see whether the same approach fits BabyOrgano.
+>
+> Anish Deo
+>
+> CEO, The Back Office Company
+
+These are internal drafts. Verify BabyOrgano’s opening, recipient identity, Mehta Groups’ approval to be named, and the one-tenth cost calculation before sending.
+
 For the first 20 accounts, founder-led/manual sending is preferable. Suggested sequence: day 0 tailored email; day 4 one follow-up with a concrete workflow sketch; day 10 final polite close. One recipient per account initially. Measure positive replies and discovery meetings, not open rates alone. Do not auto-send AI-generated copy without human review.
 
 ## 7. Turn JDs into product decisions
